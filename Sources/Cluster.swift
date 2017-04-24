@@ -42,22 +42,17 @@ public class Cluster {
     
     }
     
-    public func openBucket(name:String, callback:String) throws -> Bucket{
+    public func openBucket(name:String) throws -> Bucket{
         let bucket = try Bucket(bucketName: name, connectionString:self.connStr, password: nil)
         buckets.append(bucket)
         return bucket
     }
     /// callback needs to be a function once we figure out what it is. ///TODO
-    public func openBucket(name:String, password:String, callback : String) throws -> Bucket{
+    public func openBucket(name:String, password:String) throws -> Bucket{
         let bucket = try Bucket(bucketName: name, connectionString:self.connStr, password: password)
         buckets.append(bucket)
         return bucket
     }
-    
-    /// callback needs to be a function once we proceed
-    public func query(of:Query, params: [String], callback: String) -> QueryResponse {
-        return N1qlQueryResponse()
-    }
-    
+   
     
 }

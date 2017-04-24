@@ -9,4 +9,5 @@
 import Foundation
 public enum CouchbaseError : Error {
     case FailedInit(String)
+    case FailedConnect(String)
 }

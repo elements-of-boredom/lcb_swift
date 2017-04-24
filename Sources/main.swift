@@ -4,6 +4,7 @@ import libcouchbase
 //callbacks
 let storage_callback:lcb_store_callback = {
     (instance, cookie, op, err, resp) -> Void in
+    let result = resp!.pointee.v.v0
     let key =  Data(bytes: resp!.pointee.v.v0.key, count: resp!.pointee.v.v0.nkey)
     print("Stored key \(String(data: key, encoding: String.Encoding.utf8)!)")
 }
@@ -19,10 +20,12 @@ let get_callback:lcb_get_callback = {
 
 let cluster = Cluster()
 do{
-    let bucket = try cluster.openBucket(name: "default", callback: "blah")
+    let bucket = try cluster.openBucket(name: "default")
+    bucket.get(key:"a_simple_key")
 } catch CouchbaseError.FailedInit(let err) {
     print("Error: \(err)")
 }
+
 
 
 var cropts:lcb_create_st = lcb_create_st()

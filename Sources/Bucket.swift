@@ -10,6 +10,7 @@ import Foundation
 import libcouchbase
 
 public typealias OpCallback = (OperationResult)->()
+public typealias MultiCallback = (MultiCallbackResult)->()
 
 public class Bucket {
     private var instance : lcb_t?
@@ -18,6 +19,7 @@ public class Bucket {
     private let password:String?
     
     private static var callbacks = [String:OpCallback]()
+    private static var multiCallbacks = [String:MultiCallback]()
     
     // - MARK: Members
     public let clientVersion : String = "0.1"
@@ -62,6 +64,40 @@ public class Bucket {
         } catch {
             completion(OperationResult.Error("Serialization error: \(error.localizedDescription)"))
         }
+    }
+    
+    private let remove_callback : lcb_RESPCALLBACK = {
+        (instance, cbtype, rb) -> Void in
+        // If we have no callback, we don't need to do anything else
+        guard let callback = rb?.pointee.cookie,
+            let uuid = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? String,
+            let completion = Bucket.callbacks[uuid]else {
+                return
+        }
+        
+        //Clean up our callback.
+        Bucket.callbacks.removeValue(forKey: uuid)
+        
+        if let err = rb?.pointee.rc, err != LCB_SUCCESS {
+            if let errorMessage = lcb_strerror(instance,err),
+                let message = String(utf8String:errorMessage) {
+                completion(OperationResult.Error(message))
+            } else{
+                completion(OperationResult.Error("Failed with unknown error \(err)"))
+            }
+            return
+        }
+        
+        //Early out if we can't FIND the completion callback or its badly formed.
+        //Could guard all this at once, but may want to log differently?
+        guard let response = rb?.pointee else {
+            completion(OperationResult.Error("Success with No response found"))
+            return
+        }
+        
+        completion(OperationResult.Success(value:nil, cas: response.cas))
+
+
     }
     // What is in respcallback 
     // http://docs.couchbase.com/sdk-api/couchbase-c-client-2.7.3/group__lcb-kv-api.html#structlcb___r_e_s_p_b_a_s_e
@@ -135,6 +171,37 @@ public class Bucket {
         lcb_set_get_callback(self.instance, get_callback)
         //lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_GET.rawValue), get_callback);
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_STORE.rawValue), set_callback);
+        lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_REMOVE.rawValue), remove_callback)
+    }
+    
+    public func counter(key:String, delta:Int64, options:CounterOptions?, completion: @escaping OpCallback) {
+        var ccmd = lcb_CMDCOUNTER()
+        ccmd.key.type = LCB_KV_COPY
+        ccmd.key.contig.bytes = UnsafeRawPointer((key as NSString).utf8String!)
+        ccmd.key.contig.nbytes = key.utf8.count
+
+        if let opts = options {
+            ccmd.exptime = lcb_U32(opts.expiry)
+            ccmd.delta = delta
+            if let initial = opts.initial {
+                ccmd.initial = lcb_U64(initial)
+                ccmd.create = 1
+            }
+        }
+        
+        let uuid = storeCallback(callback: completion)
+        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+        
+        var err:lcb_error_t
+        err = lcb_counter3(instance, retainedCookie.toOpaque(), &ccmd)
+        
+        //Need to handle completion call here if we failed to schedule
+        //or completion will never be called on failure
+        if (err != LCB_SUCCESS) {
+            print("Couldn't schedule get operation! \(err)");
+            exit(1);
+        }
+        lcb_wait(instance); // get_callback is invoked here
     }
     
     public func disconnect() {
@@ -158,10 +225,60 @@ public class Bucket {
         let options = GetOptions(expiry: expiry, lock: false, cas: 0, cmdflags: 0)
         var getCMD = createGetCMD(options,key:key)
         invokeGet(cmd: &getCMD, callback: completion)
+    }
+    
+    public func getMulti(keys:[String], completion:@escaping MultiCallback) {
+        let dgroup = DispatchGroup()
+        var output = [String: OperationResult]()
+        for key in keys {
+            dgroup.enter()
+            var getCMD = self.createGetCMD(GetOptions(),key:key)
+            self.invokeGet(cmd: &getCMD) { result in
+                output[key] = result
+                dgroup.leave()
+            }
+        }
 
+        dgroup.notify(queue: DispatchQueue.main) {
+            //call completion
+            let errcount = output.filter{key,value in
+                if case (.Error(_)) = value{
+                    return true
+                }else{
+                    return false
+                }
+            }.count
+            completion(.Success(UInt(errcount), output))
+        }
+    }
+    
+    public func getReplica(key:String, index:Int32?, completion: @escaping OpCallback) {
+        var getRCMD = lcb_CMDGETREPLICA()
+        
+        if let index = index {
+            getRCMD.strategy = LCB_REPLICA_SELECT
+            getRCMD.index = index
+        }else{
+            getRCMD.strategy = LCB_REPLICA_FIRST
+        }
+        
+        let uuid = storeCallback(callback:completion)
+        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+
+        var err:lcb_error_t
+        err = lcb_rget3(instance, retainedCookie.toOpaque(), &getRCMD)
+        
+        //Need to handle completion call here if we failed to schedule
+        //or completion will never be called on failure
+        if (err != LCB_SUCCESS) {
+            print("Couldn't schedule get operation! \(err)");
+            exit(1);
+        }
+        lcb_wait(instance); // get_callback is invoked here
+        
     }
 
-    public func insert(key:String, value:Any, options:Options = InsertOptions(), completion: @escaping(OperationResult)->() ) throws {
+    public func insert(key:String, value:Any, options:Options = InsertOptions(), completion: @escaping OpCallback ) throws {
         
         //eventually use a supplied encoder?
         guard let jsonString = try encodeValue(value: value) else {
@@ -187,6 +304,33 @@ public class Bucket {
         }
         lcb_wait(instance); // set_callback is invoked here
     }
+    
+    public func remove(key:String, options:RemoveOptions?, completion: @escaping OpCallback) {
+        var rCMD = lcb_CMDREMOVE()
+        rCMD.key.type = LCB_KV_COPY
+        rCMD.key.contig.bytes = UnsafeRawPointer((key as NSString).utf8String!)
+        rCMD.key.contig.nbytes = key.utf8.count
+        
+        if let opts = options {
+            rCMD.cas = opts.cas
+        }
+        
+        let uuid = storeCallback(callback: completion)
+        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+        
+        var err:lcb_error_t
+        err = lcb_remove3(instance, retainedCookie.toOpaque(), &rCMD)
+        
+        //Need to handle completion call here if we failed to schedule
+        //or completion will never be called on failure
+        if (err != LCB_SUCCESS) {
+            print("Couldn't schedule get operation! \(err)");
+            exit(1);
+        }
+        lcb_wait(instance); // get_callback is invoked here
+
+    }
+    // - MARK: Private helpers
     
     fileprivate func createGetCMD(_ options:GetOptions, key:String) -> lcb_CMDGET {
         var getCMD = lcb_CMDGET()

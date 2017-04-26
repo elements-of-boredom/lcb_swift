@@ -44,6 +44,9 @@
 		37DB3C581EB0F75C009996DA /* DataFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37DB3C571EB0F75C009996DA /* DataFormat.swift */; };
 		37DB3C591EB0F75C009996DA /* DataFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37DB3C571EB0F75C009996DA /* DataFormat.swift */; };
 		37DB3C5A1EB0F75C009996DA /* DataFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37DB3C571EB0F75C009996DA /* DataFormat.swift */; };
+		37DB3C5C1EB105DF009996DA /* MultiCallbackResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37DB3C5B1EB105DF009996DA /* MultiCallbackResult.swift */; };
+		37DB3C5D1EB105DF009996DA /* MultiCallbackResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37DB3C5B1EB105DF009996DA /* MultiCallbackResult.swift */; };
+		37DB3C5E1EB105DF009996DA /* MultiCallbackResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37DB3C5B1EB105DF009996DA /* MultiCallbackResult.swift */; };
 		OBJ_20 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_8 /* main.swift */; };
 		OBJ_27 /* lcb_swiftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_11 /* lcb_swiftTests.swift */; };
 		OBJ_29 /* lcb_swift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = OBJ_13 /* lcb_swift.framework */; };
@@ -86,6 +89,7 @@
 		378A60831EAFA25F00651D86 /* OperationResult.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OperationResult.swift; sourceTree = "<group>"; };
 		37DB3C4E1EAFEDDD009996DA /* Options.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Options.swift; sourceTree = "<group>"; };
 		37DB3C571EB0F75C009996DA /* DataFormat.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataFormat.swift; sourceTree = "<group>"; };
+		37DB3C5B1EB105DF009996DA /* MultiCallbackResult.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MultiCallbackResult.swift; sourceTree = "<group>"; };
 		OBJ_11 /* lcb_swiftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = lcb_swiftTests.swift; sourceTree = "<group>"; };
 		OBJ_13 /* lcb_swift.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = lcb_swift.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		OBJ_14 /* lcb_swiftTests.xctest */ = {isa = PBXFileReference; lastKnownFileType = file; path = lcb_swiftTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -132,6 +136,7 @@
 				3780F0171EAA9D61001C197F /* QueryResponse.swift */,
 				3780F01B1EAA9EAD001C197F /* N1qlQueryResponse.swift */,
 				378A60831EAFA25F00651D86 /* OperationResult.swift */,
+				37DB3C5B1EB105DF009996DA /* MultiCallbackResult.swift */,
 			);
 			name = Responses;
 			sourceTree = "<group>";
@@ -323,6 +328,7 @@
 				37578C5F1EAE92F600E39B18 /* Authenticator.swift in Sources */,
 				37578C641EAE93C800E39B18 /* N1qlQueryResponse.swift in Sources */,
 				37578C621EAE93C300E39B18 /* CouchbaseError.swift in Sources */,
+				37DB3C5E1EB105DF009996DA /* MultiCallbackResult.swift in Sources */,
 				37578C611EAE92FA00E39B18 /* Query.swift in Sources */,
 				37DB3C511EAFEDDD009996DA /* Options.swift in Sources */,
 				37578C631EAE93C600E39B18 /* QueryResponse.swift in Sources */,
@@ -343,6 +349,7 @@
 				3780F0181EAA9D61001C197F /* QueryResponse.swift in Sources */,
 				3780F0091EAA8618001C197F /* Cluster.swift in Sources */,
 				3780F00F1EAA939C001C197F /* Authenticator.swift in Sources */,
+				37DB3C5C1EB105DF009996DA /* MultiCallbackResult.swift in Sources */,
 				3780F01C1EAA9EAD001C197F /* N1qlQueryResponse.swift in Sources */,
 				37DB3C4F1EAFEDDD009996DA /* Options.swift in Sources */,
 				3780F0201EAAA0B2001C197F /* CouchbaseError.swift in Sources */,
@@ -363,6 +370,7 @@
 				3780F0191EAA9D61001C197F /* QueryResponse.swift in Sources */,
 				3780F00C1EAA923C001C197F /* Cluster.swift in Sources */,
 				3780F0101EAA939C001C197F /* Authenticator.swift in Sources */,
+				37DB3C5D1EB105DF009996DA /* MultiCallbackResult.swift in Sources */,
 				3780F01D1EAA9EAD001C197F /* N1qlQueryResponse.swift in Sources */,
 				37DB3C501EAFEDDD009996DA /* Options.swift in Sources */,
 				3780F0211EAAA0B2001C197F /* CouchbaseError.swift in Sources */,

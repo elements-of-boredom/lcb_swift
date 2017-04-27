@@ -12,6 +12,7 @@ import libcouchbase
 public typealias OpCallback = (OperationResult)->()
 public typealias MultiCallback = (MultiCallbackResult)->()
 
+
 public class Bucket {
     private var instance : lcb_t?
     private let name:String
@@ -40,12 +41,7 @@ public class Bucket {
         Bucket.callbacks.removeValue(forKey: uuid)
         
         if err != LCB_SUCCESS {
-            if let errorMessage = lcb_strerror(instance,err),
-                let message = String(utf8String:errorMessage) {
-                completion(OperationResult.Error(message))
-            } else{
-                completion(OperationResult.Error("Failed with unknown error \(err)"))
-            }
+            completion(OperationResult.Error(Bucket.lcb_errortext(instance,err)))
             return
         }
         
@@ -79,12 +75,7 @@ public class Bucket {
         Bucket.callbacks.removeValue(forKey: uuid)
         
         if let err = rb?.pointee.rc, err != LCB_SUCCESS {
-            if let errorMessage = lcb_strerror(instance,err),
-                let message = String(utf8String:errorMessage) {
-                completion(OperationResult.Error(message))
-            } else{
-                completion(OperationResult.Error("Failed with unknown error \(err)"))
-            }
+            completion(OperationResult.Error(Bucket.lcb_errortext(instance,err)))
             return
         }
         
@@ -115,12 +106,7 @@ public class Bucket {
         Bucket.callbacks.removeValue(forKey: uuid)
         
         if let err = rb?.pointee.rc, err != LCB_SUCCESS {
-            if let errorMessage = lcb_strerror(instance,err),
-                let message = String(utf8String:errorMessage) {
-                completion(OperationResult.Error(message))
-            } else{
-                completion(OperationResult.Error("Failed with unknown error \(err)"))
-            }
+            completion(OperationResult.Error(Bucket.lcb_errortext(instance,err)))
             return
         }
         
@@ -135,6 +121,13 @@ public class Bucket {
     }
     
     
+    /// Default Bucket initializer
+    ///
+    /// - Parameters:
+    ///   - name: bucket name
+    ///   - connectionString: format of couchbase://ip1,dns2,ip3/bucketname
+    ///   - password: if provided will attempt SAML auth using password
+    /// - Throws: CouchbaseError.FailedInit if connection fails
     init(bucketName name:String, connectionString: String, password:String?) throws {
         self.name = name
         self.password = password
@@ -144,14 +137,11 @@ public class Bucket {
         cropts.version = 3;
         cropts.v.v3.connstr = (connectionString as NSString).utf8String //NSString is used to interop with C
         
-        print(String(cString: cropts.v.v3.connstr)) //Must put parameter name cString
-        
         //TODO: http://docs.couchbase.com/sdk-api/couchbase-c-client-2.4.0-beta/group___l_c_b___e_r_r_o_r_s.html
         //Actuall do something w/ the error maybe?
         var err:lcb_error_t
         err = lcb_create( &self.instance, &cropts )
         if ( err != LCB_SUCCESS ) {
-            print("Couldn't create instance!")
             throw CouchbaseError.FailedInit(("Couldn't create instance"))
         }
         
@@ -160,7 +150,6 @@ public class Bucket {
         lcb_wait(instance)
         err = lcb_get_bootstrap_status(instance)
         if ( err != LCB_SUCCESS ) {
-            print("Couldn't bootstrap!")
             throw CouchbaseError.FailedConnect("Couldn't connect to the instance")
         }
         
@@ -174,7 +163,7 @@ public class Bucket {
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_REMOVE.rawValue), remove_callback)
     }
     
-    public func counter(key:String, delta:Int64, options:CounterOptions?, completion: @escaping OpCallback) {
+    public func counter(key:String, delta:Int64, options:CounterOptions?, completion: @escaping OpCallback) throws {
         var ccmd = lcb_CMDCOUNTER()
         ccmd.key.type = LCB_KV_COPY
         ccmd.key.contig.bytes = UnsafeRawPointer((key as NSString).utf8String!)
@@ -198,8 +187,8 @@ public class Bucket {
         //Need to handle completion call here if we failed to schedule
         //or completion will never be called on failure
         if (err != LCB_SUCCESS) {
-            print("Couldn't schedule get operation! \(err)");
-            exit(1);
+            let message = Bucket.lcb_errortext(instance, err)
+            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // get_callback is invoked here
     }
@@ -208,23 +197,22 @@ public class Bucket {
         lcb_destroy(self.instance)
     }
     
-    public func get(key:String, completion: @escaping OpCallback) {
+    public func get(key:String, completion: @escaping OpCallback) throws {
         var getCMD = createGetCMD(GetOptions(),key:key)
-        invokeGet(cmd: &getCMD, callback: completion)
-        
+        try invokeGet(cmd: &getCMD, callback: completion)
     }
     
-    public func getAndLock(key:String, lockTime:UInt32 = 15, completion: @escaping OpCallback) {
+    public func getAndLock(key:String, lockTime:UInt32 = 15, completion: @escaping OpCallback) throws {
         let options = GetOptions(expiry: min(lockTime,UInt32(30)), lock: true, cas: 0, cmdflags: 0)
         var getCMD = createGetCMD(options,key:key)
-        invokeGet(cmd: &getCMD, callback:completion)
+        try invokeGet(cmd: &getCMD, callback:completion)
 
     }
     
-    public func getAndTouch(key:String, expiry:UInt32, completion: @escaping OpCallback) {
+    public func getAndTouch(key:String, expiry:UInt32, completion: @escaping OpCallback) throws {
         let options = GetOptions(expiry: expiry, lock: false, cas: 0, cmdflags: 0)
         var getCMD = createGetCMD(options,key:key)
-        invokeGet(cmd: &getCMD, callback: completion)
+        try invokeGet(cmd: &getCMD, callback: completion)
     }
     
     public func getMulti(keys:[String], completion:@escaping MultiCallback) {
@@ -233,9 +221,14 @@ public class Bucket {
         for key in keys {
             dgroup.enter()
             var getCMD = self.createGetCMD(GetOptions(),key:key)
-            self.invokeGet(cmd: &getCMD) { result in
-                output[key] = result
+            do {
+                try self.invokeGet(cmd: &getCMD) { result in
+                    output[key] = result
+                    dgroup.leave()
+                }
+            } catch {
                 dgroup.leave()
+                output[key] = OperationResult.Error("Couldn't schedule operation! \(error)")
             }
         }
 
@@ -252,7 +245,7 @@ public class Bucket {
         }
     }
     
-    public func getReplica(key:String, index:Int32?, completion: @escaping OpCallback) {
+    public func getReplica(key:String, index:Int32?, completion: @escaping OpCallback) throws {
         var getRCMD = lcb_CMDGETREPLICA()
         
         if let index = index {
@@ -271,8 +264,8 @@ public class Bucket {
         //Need to handle completion call here if we failed to schedule
         //or completion will never be called on failure
         if (err != LCB_SUCCESS) {
-            print("Couldn't schedule get operation! \(err)");
-            exit(1);
+            let message = Bucket.lcb_errortext(instance, err)
+            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // get_callback is invoked here
         
@@ -299,13 +292,13 @@ public class Bucket {
         //Need to handle completion call here if we failed to schedule
         //or completion will never be called on failure
         if (err != LCB_SUCCESS) {
-            print("Couldn't schedule get operation! \(err)");
-            exit(1);
+            let message = Bucket.lcb_errortext(instance, err)
+            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // set_callback is invoked here
     }
     
-    public func remove(key:String, options:RemoveOptions?, completion: @escaping OpCallback) {
+    public func remove(key:String, options:RemoveOptions?, completion: @escaping OpCallback) throws {
         var rCMD = lcb_CMDREMOVE()
         rCMD.key.type = LCB_KV_COPY
         rCMD.key.contig.bytes = UnsafeRawPointer((key as NSString).utf8String!)
@@ -321,11 +314,9 @@ public class Bucket {
         var err:lcb_error_t
         err = lcb_remove3(instance, retainedCookie.toOpaque(), &rCMD)
         
-        //Need to handle completion call here if we failed to schedule
-        //or completion will never be called on failure
         if (err != LCB_SUCCESS) {
-            print("Couldn't schedule get operation! \(err)");
-            exit(1);
+            let message = Bucket.lcb_errortext(instance, err)
+            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // get_callback is invoked here
 
@@ -345,18 +336,16 @@ public class Bucket {
         return getCMD
     }
     
-    fileprivate func invokeGet(cmd: inout lcb_CMDGET, callback:@escaping OpCallback) {
+    fileprivate func invokeGet(cmd: inout lcb_CMDGET, callback:@escaping OpCallback) throws {
         let uuid = storeCallback(callback:callback)
         let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
         
         var err:lcb_error_t
         err = lcb_get3(instance, retainedCookie.toOpaque(), &cmd)
         
-        //Need to handle completion call here if we failed to schedule
-        //or completion will never be called on failure
         if (err != LCB_SUCCESS) {
-            print("Couldn't schedule get operation! \(err)");
-            exit(1);
+            let message = Bucket.lcb_errortext(instance, err)
+            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // get_callback is invoked here
     }
@@ -370,6 +359,17 @@ public class Bucket {
     fileprivate func encodeValue(value:Any) throws -> String? {
         return String(data: try JSONSerialization.data(withJSONObject: value, options: .prettyPrinted), encoding:.utf8)
         
+    }
+    
+    ///May want to move this guy somewhere more accessible later 
+    ///TODO:
+    fileprivate static func lcb_errortext(_ instance:lcb_t?, _ error: lcb_error_t) -> String {
+        if let instance = instance,
+            let errorMessage = lcb_strerror(instance,error),
+            let message = String(utf8String:errorMessage) {
+            return message
+        }
+        return "Failed with unknown error: \(error)"
     }
     
 }

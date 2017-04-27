@@ -17,15 +17,30 @@ public class Cluster {
     
 // MARK: - PUBLIC 
     
+    
+    /// Convenience initializer for a Cluster.
+    /// Uses the default bucket at localhost, with no options
     public convenience init() {
         self.init(connectionString: "couchbase://localhost/default",options: nil)
     }
     
+    
+    /// Convenience initializer for a Cluster.
+    /// Uses the supplied connectionString with no options
+    /// expected format for connectionString is `couchbase://$HOSTS/$BUCKET?$OPTIONS`
+    ///
+    /// - Parameter connectionString: url-encoded connection string
     public convenience init(connectionString: String) {
         
-        self.init(connectionString:connectionString, options : CreateOptions())
+        self.init(connectionString:connectionString, options : nil)
     }
     
+    
+    /// Creates a Cluster object which holds reference to the buckets it owns
+    ///
+    /// - Parameters:
+    ///   - connectionString: url-encoded connection string
+    ///   - options: additional connection options used for managaing connections
     public init(connectionString : String , options : CreateOptions? ) {
         self.connStr = connectionString
         self.options = options
@@ -42,6 +57,12 @@ public class Cluster {
     
     }
     
+    
+    /// Opens a bucket, making it available for operation requests.
+    ///
+    /// - Parameter name: The name of the bucket to open
+    /// - Returns: an initialized bucket ready for operations
+    /// - Throws: CouchbaseError.FailedInit, .FailedConnect
     public func openBucket(name:String) throws -> Bucket{
         let bucket = try Bucket(bucketName: name, connectionString:self.connStr, password: nil)
         buckets.append(bucket)

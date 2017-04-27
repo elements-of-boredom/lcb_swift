@@ -1,48 +1,78 @@
 import Foundation
 import libcouchbase
 
+// Nothing in this file should live longer than it takes me to get actual tests setup
+/// TODO:
+
 var d = [["name":"greg"], ["age": arc4random()]]
-var loop = true
 
 let cluster = Cluster()
+var dirty = DispatchSemaphore(value:0)
+
+let newkey = "key-\(UUID().uuidString)"
+
+guard let bucket = try? cluster.openBucket(name:"default") else {
+    print("Unable to open bucket")
+    exit(1)
+}
+
 do{
-    let bucket = try cluster.openBucket(name: "default")
-    let newkey = "key-\(UUID().uuidString)"
     print("The inserted key was:\(newkey)")
     try bucket.insert(key: newkey, value: d) { result in
         switch result {
         case let .Success(cas):
             print(cas)
-            bucket.get(key:newkey) { result in
-                switch result {
-                case let .Success(value,cas):
-                    print("value:\(value!)")
-                    print("cas:\(cas)")
-                    bucket.remove(key: newkey, options: nil) { result in
-                        switch result {
-                        case let .Success(value,cas):
-                            print(cas)
-                        default:
-                            break
-                        }
-                    }
-                case let .Error(msg):
-                    print("WRONG!--: \(msg)")
-                    
-                }
-            }
         case let .Error(msg):
             print("Error:\(msg)")
         }
+        dirty.signal()
     }
     
-} catch CouchbaseError.FailedInit(let err) {
-    print("Error: \(err)")
+} catch let error {
+    print("Error: \(error)")
+    dirty.signal()
 }
+let _ = dirty.wait(timeout:DispatchTime.now() + .seconds(3))
+
+do {
+    try bucket.get(key:newkey) { result in
+        switch result {
+        case let .Success(value,cas):
+            print("value:\(value!)")
+            print("cas:\(cas)")
+           
+        case let .Error(msg):
+            print("WRONG!--: \(msg)")
+        }
+         dirty.signal()
+    }
+}
+catch let error {
+    print("Error: \(error)")
+    dirty.signal()
+}
+let _ = dirty.wait(timeout:DispatchTime.now() + .seconds(3))
+
+do {
+    try bucket.remove(key: newkey, options: nil) { result in
+        switch result {
+        case let .Success(value,cas):
+            print(cas)
+        default:
+            break
+        }
+        dirty.signal()
+    }
+}catch let error {
+    print("Error: \(error)")
+    dirty.signal()
+}
+let _ = dirty.wait(timeout:DispatchTime.now() + .seconds(3))
+
 
 do {
     let bucket = try cluster.openBucket(name: "default")
-    let keys = ["key-01D613A6-30BC-4D1D-849F-1A853A79262E","key-0A13F1BD-425D-437F-9E4F-2147AF2CCA0D"]
+    let keys = ["key-3634F97F-21B7-4391-B552-FDF1BE2B3BCA","key-0A13F1BD-425D-437F-9E4F-2147AF2CCA0D"]
     bucket.getMulti(keys: keys) { result in
         switch result {
         case let .Error(msg):

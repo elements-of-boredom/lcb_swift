@@ -55,23 +55,6 @@ public class Bucket {
         }
     }
     
-    /// Per node configuration timeout.
-    /// The per-node configuration timeout sets the amount of time to wait for each node within the bootstrap/configuration process. 
-    /// This interval is a subset of the `connectionTimeout` option mentioned above and is intended to ensure that the bootstrap process
-    /// does not wait too long for a given node. Nodes that are physically offline may never respond and it may take a long time until
-    /// they are detected as being offline
-    public var nodeConnectionTimeout : Int32 {
-        get {
-            var value :Int32 = 0
-            lcb_cntl(instance, LCB_CNTL_GET, LCB_CNTL_CONFIG_NODE_TIMEOUT,&value)
-            return value
-        }
-        set {
-            let pointer = Unmanaged<AnyObject>.passUnretained(newValue as AnyObject)
-            lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_CONFIG_NODE_TIMEOUT,pointer.toOpaque())
-        }
-    }
-    
     
     /// Polling grace interval for lcb_durability_poll()
     /// This is the time the client will wait between repeated probes to a given server
@@ -141,6 +124,43 @@ public class Bucket {
             lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_N1QL_TIMEOUT,pointer.toOpaque())
         }
     }
+    
+    
+    /// Per node configuration timeout.
+    /// The per-node configuration timeout sets the amount of time to wait for each node within the bootstrap/configuration process.
+    /// This interval is a subset of the `connectionTimeout` option mentioned above and is intended to ensure that the bootstrap process
+    /// does not wait too long for a given node. Nodes that are physically offline may never respond and it may take a long time until
+    /// they are detected as being offline
+    public var nodeConnectionTimeout : Int32 {
+        get {
+            var value :Int32 = 0
+            lcb_cntl(instance, LCB_CNTL_GET, LCB_CNTL_CONFIG_NODE_TIMEOUT,&value)
+            return value
+        }
+        set {
+            let pointer = Unmanaged<AnyObject>.passUnretained(newValue as AnyObject)
+            lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_CONFIG_NODE_TIMEOUT,pointer.toOpaque())
+        }
+    }
+    
+    
+    /// The operation timeout.
+    /// The operation timeout is the maximum amount of time the library will wait for an operation to receive
+    /// a response before invoking its callback with a failed status.
+    /// Operations can timeout if the server is taking to long to respond, or an updated cluster config
+    /// has not been received within the `configThrottle` time window.
+    public var operationTimeout : Int32 {
+        get {
+            var value :Int32 = 0
+            lcb_cntl(instance, LCB_CNTL_GET, LCB_CNTL_OP_TIMEOUT,&value)
+            return value
+        }
+        set {
+            let pointer = Unmanaged<AnyObject>.passUnretained(newValue as AnyObject)
+            lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_OP_TIMEOUT,pointer.toOpaque())
+        }
+    }
+
 
 
     // - MARK: Callbacks

@@ -126,6 +126,21 @@ public class Bucket {
             lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_HTTP_TIMEOUT,pointer.toOpaque())
         }
     }
+    
+    
+    /// N1QL Timeout is the time that a Bucket will wait for a response from the server
+    /// for a n1ql request.
+    public var n1qlTimeout : Int32 {
+        get {
+            var value :Int32 = 0
+            lcb_cntl(instance, LCB_CNTL_GET, LCB_CNTL_N1QL_TIMEOUT,&value)
+            return value
+        }
+        set {
+            let pointer = Unmanaged<AnyObject>.passUnretained(newValue as AnyObject)
+            lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_N1QL_TIMEOUT,pointer.toOpaque())
+        }
+    }
 
 
     // - MARK: Callbacks

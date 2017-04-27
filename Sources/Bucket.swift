@@ -111,6 +111,22 @@ public class Bucket {
             return String(utf8String:lcb_get_version(nil))!
         }
     }
+    
+    
+    /// The management timeout is the time the bucket will wait for a response
+    /// from the server for a management request. (Non-view Http Requests)
+    public var managementTimeout : Int32 {
+        get {
+            var value :Int32 = 0
+            lcb_cntl(instance, LCB_CNTL_GET, LCB_CNTL_HTTP_TIMEOUT,&value)
+            return value
+        }
+        set {
+            let pointer = Unmanaged<AnyObject>.passUnretained(newValue as AnyObject)
+            lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_HTTP_TIMEOUT,pointer.toOpaque())
+        }
+    }
+
 
     // - MARK: Callbacks
     private let get_callback:lcb_get_callback = {

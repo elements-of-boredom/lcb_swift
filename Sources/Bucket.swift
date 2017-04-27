@@ -304,6 +304,14 @@ public class Bucket {
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_REMOVE.rawValue), remove_callback)
     }
     
+    /// Increments or decrements a key's numeric value
+    ///
+    /// - Parameters:
+    ///   - key: Document Key
+    ///   - delta: The amount to add or subtract from the coutner value.
+    ///   - options: options for the counter operation
+    ///   - completion: callback which is called when the operation completes.
+    /// - Throws: CouchbaseError.FailedOperationSchedule
     public func counter(key:String, delta:Int64, options:CounterOptions?, completion: @escaping OpCallback) throws {
         var ccmd = lcb_CMDCOUNTER()
         ccmd.key.type = LCB_KV_COPY
@@ -334,15 +342,37 @@ public class Bucket {
         lcb_wait(instance); // get_callback is invoked here
     }
     
+    
+    /// Destroys and releases all allocated resources owned by the bucket.
+    /// Making any further calls after disconnecting will most likely cause application crashes
+    /// Any pending operation's callbacks will not be invoked.
     public func disconnect() {
         lcb_destroy(self.instance)
     }
     
+    
+    /// Retreives a document by key.
+    ///
+    /// - Parameters:
+    ///   - key: Document key
+    ///   - completion: Callback which is called on operation completion.
+    /// - Throws: CouchbaseError.FailedOperationSchedule
     public func get(key:String, completion: @escaping OpCallback) throws {
         var getCMD = createGetCMD(GetOptions(),key:key)
         try invokeGet(cmd: &getCMD, callback: completion)
     }
     
+    
+    /// Locks the document on the server and retreives it. While locked, any attempts to 
+    /// modify the document without providing the current CAS will fail until the lock
+    /// is released by calling `unlock`, or by performing a storage operation (`upsert`,`replace`,`append`)
+    /// while providing the current CAS. Attempting to lock a locked document will fail.
+    ///
+    /// - Parameters:
+    ///   - key: Document key
+    ///   - lockTime: The duration of time the lock should be held for. This value is capped at 30 seconds
+    ///   - completion: Callback which is called on operation completion
+    /// - Throws: CouchbaseError.FailedOperationSchedule
     public func getAndLock(key:String, lockTime:UInt32 = 15, completion: @escaping OpCallback) throws {
         let options = GetOptions(expiry: min(lockTime,UInt32(30)), lock: true, cas: 0, cmdflags: 0)
         var getCMD = createGetCMD(options,key:key)
@@ -350,12 +380,27 @@ public class Bucket {
 
     }
     
+    
+    /// Gets a document and updates its expiry at the same time
+    ///
+    /// - Parameters:
+    ///   - key: Document key
+    ///   - expiry: This is either an absolute Unix time stamp or a relative offset from now, in seconds.
+    ///      If the value of this number is greater than the value of thirty days in seconds, then it is a Unix timestamp.
+    ///   - completion: Callback which is called on operation completion
+    /// - Throws: CouchbaseError.FailedOperationSchedule
     public func getAndTouch(key:String, expiry:UInt32, completion: @escaping OpCallback) throws {
         let options = GetOptions(expiry: expiry, lock: false, cas: 0, cmdflags: 0)
         var getCMD = createGetCMD(options,key:key)
         try invokeGet(cmd: &getCMD, callback: completion)
     }
     
+    
+    /// Retreives a list of documents returned as a dictionary of key:OpCallback, and an error count
+    ///
+    /// - Parameters:
+    ///   - keys: Array of Document keys
+    ///   - completion: Callback which receives a `MultiCallbackResult`
     public func getMulti(keys:[String], completion:@escaping MultiCallback) {
         let dgroup = DispatchGroup()
         var output = [String: OperationResult]()
@@ -386,6 +431,15 @@ public class Bucket {
         }
     }
     
+    
+    /// Gets a document from a replica server in the cluster
+    ///
+    /// - Parameters:
+    ///   - key: Document key
+    ///   - index: the index for which replica you want to receive the value from.
+    ///     when left undefined, it uses the value from the first server in the list
+    ///   - completion: Callback which is called on operation completion
+    /// - Throws: CouchbaseError.FailedOperationSchedule
     public func getReplica(key:String, index:Int32?, completion: @escaping OpCallback) throws {
         var getRCMD = lcb_CMDGETREPLICA()
         
@@ -411,9 +465,18 @@ public class Bucket {
         lcb_wait(instance); // get_callback is invoked here
         
     }
-
+    
+    
+    /// Inserts a document with the provided key. Will fail if the document already exists
+    ///
+    /// - Parameters:
+    ///   - key: Document key
+    ///   - value: Document contents
+    ///   - options: options for the insert operation
+    ///   - completion: Callback which is called on operation completion
+    /// - Throws: CouchbaseError.FailedOperationSchedule
     public func insert(key:String, value:Any, options:Options = InsertOptions(), completion: @escaping OpCallback ) throws {
-        
+        ///TODO: acknowledge options
         //eventually use a supplied encoder?
         guard let jsonString = try encodeValue(value: value) else {
             throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
@@ -439,6 +502,15 @@ public class Bucket {
         lcb_wait(instance); // set_callback is invoked here
     }
     
+    
+    
+    /// Deletes a document from the server
+    ///
+    /// - Parameters:
+    ///   - key: Document Key
+    ///   - options: options for the remove operation
+    ///   - completion: Callback which is called on operation completion
+    /// - Throws: CouchbaseError.FailedOperationSchedule
     public func remove(key:String, options:RemoveOptions?, completion: @escaping OpCallback) throws {
         var rCMD = lcb_CMDREMOVE()
         rCMD.key.type = LCB_KV_COPY
@@ -462,6 +534,36 @@ public class Bucket {
         lcb_wait(instance); // get_callback is invoked here
 
     }
+    
+    public func upsert(key:String, value:Any, options:Options = UpsertOptions(), completion: @escaping OpCallback ) throws {
+        ///TODO: acknowledge options
+        //eventually use a supplied encoder?
+        guard let jsonString = try encodeValue(value: value) else {
+            throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
+        }
+        
+        var cmd :lcb_CMDSTORE = lcb_CMDSTORE()
+        cmd.operation = LCB_UPSERT
+        LCB_CMD_SET_KEY(&cmd, key, key.utf8.count)
+        LCB_CMD_SET_VALUE(&cmd, jsonString, jsonString.utf8.count)
+        cmd.flags = DataFormat.Json.rawValue
+        let uuid = storeCallback(callback: completion)
+        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+        
+        var err:lcb_error_t
+        err = lcb_store3(instance, retainedCookie.toOpaque(), &cmd)
+        
+        //Need to handle completion call here if we failed to schedule
+        //or completion will never be called on failure
+        if (err != LCB_SUCCESS) {
+            let message = Bucket.lcb_errortext(instance, err)
+            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
+        }
+        lcb_wait(instance); // set_callback is invoked here
+    }
+
+    
+    
     // - MARK: Private helpers
     
     fileprivate func createGetCMD(_ options:GetOptions, key:String) -> lcb_CMDGET {

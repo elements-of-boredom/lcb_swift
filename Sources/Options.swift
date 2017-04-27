@@ -43,6 +43,12 @@ public struct InsertOptions : Options {
     public var replicateTo: Int32 = 0
 }
 
+public struct UpsertOptions : Options {
+    public var persistTo: Int32 = 0
+    public var expiry: Int32 = 0
+    public var replicateTo: Int32 = 0
+}
+
 public struct GetOptions {
     public var expiry : UInt32 = 0
     public var lock : Bool = false

@@ -42,11 +42,24 @@ public class Bucket {
             lcb_cntl(instance, LCB_CNTL_GET, LCB_CNTL_CONFDELAY_THRESH,&value)
             return value
         }
-        
         set (newValue) {
-            let pointer = UnsafeMutablePointer<Int32>.allocate(capacity: 1)
-            pointer.pointee = newValue
-            lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_CONFDELAY_THRESH,pointer)
+            let pointer = Unmanaged<AnyObject>.passUnretained(newValue as AnyObject)
+            lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_CONFDELAY_THRESH,pointer.toOpaque())
+        }
+    }
+    
+    
+    /// Initial bootstrapping timeout.
+    /// This is how long the client will wait to obtain the initial configuration
+    public var connectionTimeout : Int32 {
+        get {
+            var value :Int32 = 0
+            lcb_cntl(instance, LCB_CNTL_GET, LCB_CNTL_CONFIGURATION_TIMEOUT,&value)
+            return value
+        }
+        set {
+            let pointer = Unmanaged<AnyObject>.passUnretained(newValue as AnyObject)
+            lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_CONFIGURATION_TIMEOUT,pointer.toOpaque())
         }
     }
 

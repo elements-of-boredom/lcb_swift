@@ -79,6 +79,21 @@ public class Bucket {
             lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_CONFIG_NODE_TIMEOUT,pointer.toOpaque())
         }
     }
+    
+    
+    /// Polling grace interval for lcb_durability_poll()
+    /// This is the time the client will wait between repeated probes to a given server
+    public var durabilityInterval : Int32 {
+        get {
+            var value :Int32 = 0
+            lcb_cntl(instance, LCB_CNTL_GET, LCB_CNTL_DURABILITY_INTERVAL,&value)
+            return value
+        }
+        set {
+            let pointer = Unmanaged<AnyObject>.passUnretained(newValue as AnyObject)
+            lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_DURABILITY_INTERVAL,pointer.toOpaque())
+        }
+    }
 
     // - MARK: Callbacks
     private let get_callback:lcb_get_callback = {

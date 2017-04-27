@@ -32,6 +32,23 @@ public class Bucket {
             return "\(major).\(minor).\(sub)"
         }
     }
+    
+    /// The amount of time (in microseconds) that the Bucket will wait before
+    /// forcing a configuration refresh. If no refresh occurs before this period
+    /// while a configuration is marked invalid, an update will be triggered.
+    public var configThrottle : Int32 {
+        get {
+            var value :Int32 = 0
+            lcb_cntl(instance, LCB_CNTL_GET, LCB_CNTL_CONFDELAY_THRESH,&value)
+            return value
+        }
+        
+        set (newValue) {
+            let pointer = UnsafeMutablePointer<Int32>.allocate(capacity: 1)
+            pointer.pointee = newValue
+            lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_CONFDELAY_THRESH,pointer)
+        }
+    }
 
     // - MARK: Callbacks
     private let get_callback:lcb_get_callback = {

@@ -16,6 +16,11 @@ guard let bucket = try? cluster.openBucket(name:"default") else {
     exit(1)
 }
 print("Current libcouchbase version is:\(bucket.lcbVersion)")
+
+print("configThrottle:\(bucket.configThrottle)")
+let limit:Int32 = 900000003
+bucket.configThrottle = limit
+print("configThrottle is now \(limit)? \(bucket.configThrottle == limit)")
 do{
     print("The inserted key was:\(newkey)")
     try bucket.insert(key: newkey, value: d) { result in

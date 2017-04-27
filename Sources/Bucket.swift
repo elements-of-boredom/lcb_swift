@@ -24,14 +24,6 @@ public class Bucket {
     
     // - MARK: Members
     public let clientVersion : String = "0.1"
-    public var lcbVersion : String {
-        get {
-            let major = String(LCB_VERSION >> 16)
-            let minor = String(LCB_VERSION >> 8 & 0xFF)
-            let sub = String(LCB_VERSION & 0xFF)
-            return "\(major).\(minor).\(sub)"
-        }
-    }
     
     /// The amount of time (in microseconds) that the Bucket will wait before
     /// forcing a configuration refresh. If no refresh occurs before this period
@@ -108,6 +100,15 @@ public class Bucket {
         set {
             let pointer = Unmanaged<AnyObject>.passUnretained(newValue as AnyObject)
             lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_DURABILITY_TIMEOUT,pointer.toOpaque())
+        }
+    }
+    
+    
+    /// Returns the libcouchbase version as a string.
+    public var lcbVersion : String {
+        get {
+            //calls to utf8String cant really fail, we could get bad data though
+            return String(utf8String:lcb_get_version(nil))!
         }
     }
 

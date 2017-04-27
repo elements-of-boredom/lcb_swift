@@ -145,7 +145,7 @@ public class Bucket {
     
     
     /// The operation timeout.
-    /// The operation timeout is the maximum amount of time the library will wait for an operation to receive
+    /// The operation timeout is the maximum amount of time the SDK will wait for an operation to receive
     /// a response before invoking its callback with a failed status.
     /// Operations can timeout if the server is taking to long to respond, or an updated cluster config
     /// has not been received within the `configThrottle` time window.
@@ -161,7 +161,20 @@ public class Bucket {
         }
     }
 
-
+    
+    /// The view timeout.
+    /// The view timeout is the maximum amount of time the SDK will wait for HTTP requests of the `view` type
+    public var viewTimeout : Int32 {
+        get {
+            var value :Int32 = 0
+            lcb_cntl(instance, LCB_CNTL_GET, LCB_CNTL_OP_TIMEOUT,&value)
+            return value
+        }
+        set {
+            let pointer = Unmanaged<AnyObject>.passUnretained(newValue as AnyObject)
+            lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_OP_TIMEOUT,pointer.toOpaque())
+        }
+    }
 
     // - MARK: Callbacks
     private let get_callback:lcb_get_callback = {

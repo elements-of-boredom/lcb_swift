@@ -94,6 +94,22 @@ public class Bucket {
             lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_DURABILITY_INTERVAL,pointer.toOpaque())
         }
     }
+    
+    
+    /// Default timeout for how long the client will spend sending repeated probes to a 
+    /// given key's vBucket masters and replica's before they are deemed not to have 
+    /// satisfied durability requirements.
+    public var durabilityTimeout : Int32 {
+        get {
+            var value :Int32 = 0
+            lcb_cntl(instance, LCB_CNTL_GET, LCB_CNTL_DURABILITY_TIMEOUT,&value)
+            return value
+        }
+        set {
+            let pointer = Unmanaged<AnyObject>.passUnretained(newValue as AnyObject)
+            lcb_cntl(instance, LCB_CNTL_SET, LCB_CNTL_DURABILITY_TIMEOUT,pointer.toOpaque())
+        }
+    }
 
     // - MARK: Callbacks
     private let get_callback:lcb_get_callback = {

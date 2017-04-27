@@ -24,9 +24,16 @@ public class Bucket {
     
     // - MARK: Members
     public let clientVersion : String = "0.1"
-    public var lcbVersion : String
+    public var lcbVersion : String {
+        get {
+            let major = String(LCB_VERSION >> 16)
+            let minor = String(LCB_VERSION >> 8 & 0xFF)
+            let sub = String(LCB_VERSION & 0xFF)
+            return "\(major).\(minor).\(sub)"
+        }
+    }
 
-    
+    // - MARK: Callbacks
     private let get_callback:lcb_get_callback = {
         (instance, cookie, err, resp) -> Void in
         
@@ -45,8 +52,6 @@ public class Bucket {
             return
         }
         
-        //Early out if we can't FIND the completion callback or its badly formed.
-        //Could guard all this at once, but may want to log differently?
         guard let response = resp?.pointee.v.v0 else{
             completion(OperationResult.Error("Success with No response found"))
             return
@@ -79,8 +84,6 @@ public class Bucket {
             return
         }
         
-        //Early out if we can't FIND the completion callback or its badly formed.
-        //Could guard all this at once, but may want to log differently?
         guard let response = rb?.pointee else {
             completion(OperationResult.Error("Success with No response found"))
             return
@@ -110,8 +113,6 @@ public class Bucket {
             return
         }
         
-        //Early out if we can't FIND the completion callback or its badly formed.
-        //Could guard all this at once, but may want to log differently?
         guard let response = rb?.pointee else {
             completion(OperationResult.Error("Success with No response found"))
             return
@@ -152,9 +153,6 @@ public class Bucket {
         if ( err != LCB_SUCCESS ) {
             throw CouchbaseError.FailedConnect("Couldn't connect to the instance")
         }
-        
-        //Just set it for now
-        self.lcbVersion = "0.1"
         
         //register callback
         lcb_set_get_callback(self.instance, get_callback)

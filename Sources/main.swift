@@ -15,7 +15,7 @@ guard let bucket = try? cluster.openBucket(name:"default") else {
     print("Unable to open bucket")
     exit(1)
 }
-
+print("Current libcouchbase version is:\(bucket.lcbVersion)")
 do{
     print("The inserted key was:\(newkey)")
     try bucket.insert(key: newkey, value: d) { result in

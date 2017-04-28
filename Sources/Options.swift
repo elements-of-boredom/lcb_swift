@@ -22,7 +22,7 @@ public protocol CASOption {
 }
 
 public struct ReplaceOptions {
-    public var cas: UInt64
+    public var cas: UInt64 = 0
 
     public var replicateTo: Int32 = 0
     public var persistTo: Int32 = 0
@@ -38,6 +38,7 @@ public struct RemoveOptions {
 }
 
 public struct InsertOptions : Options {
+    public var cas: UInt64 = 0
     public var persistTo: Int32 = 0
     public var expiry: Int32 = 0
     public var replicateTo: Int32 = 0
@@ -54,6 +55,15 @@ public struct GetOptions {
     public var lock : Bool = false
     public var cas : UInt64 = 0
     public var cmdflags : UInt32 = 0
+}
+
+public struct StoreOptions {
+    public var operation : StorageOperation = .Upsert
+    public var dataTypeFlags : DataFormat = .Json
+    public var cas : UInt64 = 0
+    public var expiry : Int32 = 0
+    public var cmdflags : UInt32 = 0
+    
 }
 
 public struct CounterOptions {

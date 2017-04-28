@@ -304,6 +304,31 @@ public class Bucket {
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_REMOVE.rawValue), remove_callback)
     }
     
+    
+    /// Rather than setting the contents of the entire document, take the value specified and append it to the existing
+    /// document value.
+    ///
+    /// - Parameters:
+    ///   - key: Document Key
+    ///   - value: String value to append
+    ///   - options: options for the insert operation
+    ///   - completion: Callback that will be called on operation completion
+    /// - Throws: CouchbaseError.FailedOperationSchedule
+    public func append(key:String, value:String, options:Options = InsertOptions(), completion: @escaping OpCallback ) throws {
+        ///TODO: acknowledge options
+        
+        var storeOptions = StoreOptions()
+        storeOptions.dataTypeFlags = .Json //Encoder should eventually handle this
+        storeOptions.operation = .Append
+        storeOptions.expiry = options.expiry
+        
+        var cmd  = createStoreCMD(storeOptions, key: key)
+        LCB_CMD_SET_VALUE(&cmd, value, value.utf8.count)
+        
+        try self.invokeStore(cmd: &cmd, callback: completion)
+    }
+
+    
     /// Increments or decrements a key's numeric value
     ///
     /// - Parameters:
@@ -481,27 +506,16 @@ public class Bucket {
         guard let jsonString = try encodeValue(value: value) else {
             throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
         }
+        var storeOptions = StoreOptions()
+        storeOptions.dataTypeFlags = .Json //Encoder should eventually handle this
+        storeOptions.operation = .Insert
+        storeOptions.expiry = options.expiry
         
-        var cmd :lcb_CMDSTORE = lcb_CMDSTORE()
-        cmd.operation = LCB_SET
-        LCB_CMD_SET_KEY(&cmd, key, key.utf8.count)
+        var cmd  = createStoreCMD(storeOptions, key: key)
         LCB_CMD_SET_VALUE(&cmd, jsonString, jsonString.utf8.count)
-        cmd.flags = DataFormat.Json.rawValue
-        let uuid = storeCallback(callback: completion)
-        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
         
-        var err:lcb_error_t
-        err = lcb_store3(instance, retainedCookie.toOpaque(), &cmd)
-        
-        //Need to handle completion call here if we failed to schedule
-        //or completion will never be called on failure
-        if (err != LCB_SUCCESS) {
-            let message = Bucket.lcb_errortext(instance, err)
-            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
-        }
-        lcb_wait(instance); // set_callback is invoked here
+        try self.invokeStore(cmd: &cmd, callback: completion)
     }
-    
     
     
     /// Deletes a document from the server
@@ -532,26 +546,52 @@ public class Bucket {
             throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // get_callback is invoked here
-
     }
     
-    public func upsert(key:String, value:Any, options:Options = UpsertOptions(), completion: @escaping OpCallback ) throws {
+    
+    /// Stores a document to the bucket. Will not succeed if the document key does not already exist.
+    ///
+    /// - Parameters:
+    ///   - key: Document key
+    ///   - value: Document contents
+    ///   - options: options for a replace operation
+    ///   - completion: Callback that will be called on operation completion
+    /// - Throws: CouchbaseError.FailedOperationSchedule, FailedSerialization
+    public func replace(key:String, value:Any, options:ReplaceOptions = ReplaceOptions(), completion: @escaping OpCallback ) throws {
         ///TODO: acknowledge options
         //eventually use a supplied encoder?
         guard let jsonString = try encodeValue(value: value) else {
             throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
         }
+        var storeOptions = StoreOptions()
+        storeOptions.dataTypeFlags = .Json //Encoder should eventually handle this
+        storeOptions.operation = .Upsert
+        storeOptions.expiry = options.expiry
         
-        var cmd :lcb_CMDSTORE = lcb_CMDSTORE()
-        cmd.operation = LCB_UPSERT
-        LCB_CMD_SET_KEY(&cmd, key, key.utf8.count)
+        var cmd  = createStoreCMD(storeOptions, key: key)
         LCB_CMD_SET_VALUE(&cmd, jsonString, jsonString.utf8.count)
-        cmd.flags = DataFormat.Json.rawValue
+        
+        try self.invokeStore(cmd: &cmd, callback: completion)
+    }
+    
+    
+    /// Updates the document's expiration time
+    ///
+    /// - Parameters:
+    ///   - key: Document Key
+    ///   - expiry: This is either an absolute Unix time stamp or a relative offset from now, in seconds. 
+    ///     If the value of this number is greater than the value of thirty days in seconds, then it is a Unix timestamp.
+    ///   - completion: Callback that is called on operation completion
+    /// - Throws: CouchbaseError.FailedOperationSchedule
+    public func touch(key:String, expiry:UInt32, completion: @escaping OpCallback) throws {
+        var cmd = lcb_CMDTOUCH()
+        cmd.exptime = expiry
+        
         let uuid = storeCallback(callback: completion)
         let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
         
         var err:lcb_error_t
-        err = lcb_store3(instance, retainedCookie.toOpaque(), &cmd)
+        err = lcb_touch3(instance, retainedCookie.toOpaque(), &cmd)
         
         //Need to handle completion call here if we failed to schedule
         //or completion will never be called on failure
@@ -560,6 +600,63 @@ public class Bucket {
             throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // set_callback is invoked here
+    }
+    
+    
+    /// Unlocks a previously locked document
+    ///
+    /// - Parameters:
+    ///   - key: Document Key
+    ///   - cas: CAS value of the document being unlocked
+    ///   - completion: Callback that will be called on operation completion
+    /// - Throws: CouchbaseError.FailedOperationSchedule
+    public func unlock(key:String, cas:UInt64, completion: @escaping OpCallback ) throws {
+        ///TODO: acknowledge options
+        //eventually use a supplied encoder?
+        
+        var cmd  = lcb_CMDUNLOCK()
+        cmd.cas = cas
+        LCB_CMD_SET_KEY(&cmd, key,key.utf8.count)
+        
+        let uuid = storeCallback(callback: completion)
+        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+        
+        var err:lcb_error_t
+        err = lcb_unlock3(instance, retainedCookie.toOpaque(), &cmd)
+        
+        //Need to handle completion call here if we failed to schedule
+        //or completion will never be called on failure
+        if (err != LCB_SUCCESS) {
+            let message = Bucket.lcb_errortext(instance, err)
+            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
+        }
+        lcb_wait(instance); // set_callback is invoked here
+    }
+    
+    
+    /// Stores a document to the bucket. It will be created if it does not exist and updated if it already exists
+    ///
+    /// - Parameters:
+    ///   - key: Document Key
+    ///   - value: Document value
+    ///   - options: options for the Upsert operation
+    ///   - completion: Callback that will be called on completion
+    /// - Throws: CouchbaseError.FailedOperationSchedule
+    public func upsert(key:String, value:Any, options:Options = UpsertOptions(), completion: @escaping OpCallback ) throws {
+        ///TODO: acknowledge options
+        //eventually use a supplied encoder?
+        guard let jsonString = try encodeValue(value: value) else {
+            throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
+        }
+        var storeOptions = StoreOptions()
+        storeOptions.dataTypeFlags = .Json //Encoder should eventually handle this
+        storeOptions.operation = .Upsert
+        storeOptions.expiry = options.expiry
+        
+        var cmd  = createStoreCMD(storeOptions, key: key)
+        LCB_CMD_SET_VALUE(&cmd, jsonString, jsonString.utf8.count)
+        
+        try self.invokeStore(cmd: &cmd, callback: completion)
     }
 
     
@@ -591,6 +688,35 @@ public class Bucket {
             throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // get_callback is invoked here
+    }
+    
+    fileprivate func createStoreCMD(_ options:StoreOptions, key:String) -> lcb_CMDSTORE {
+        var storeCMD = lcb_CMDSTORE()
+        storeCMD.cas = options.cas
+        storeCMD.cmdflags = options.cmdflags
+        storeCMD.operation = options.operation.toLcbType()
+        storeCMD.flags = options.dataTypeFlags.rawValue
+        
+        LCB_CMD_SET_KEY(&storeCMD, key, key.utf8.count)
+        return storeCMD
+    }
+    
+    fileprivate func invokeStore(cmd: inout lcb_CMDSTORE, callback: @escaping OpCallback) throws {
+        
+        let uuid = storeCallback(callback: callback)
+        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+        
+        var err:lcb_error_t
+        err = lcb_store3(instance, retainedCookie.toOpaque(), &cmd)
+        
+        //Need to handle completion call here if we failed to schedule
+        //or completion will never be called on failure
+        if (err != LCB_SUCCESS) {
+            let message = Bucket.lcb_errortext(instance, err)
+            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
+        }
+        lcb_wait(instance); // set_callback is invoked here
+
     }
     
     fileprivate func storeCallback(callback:@escaping(OperationResult)->()) -> String {

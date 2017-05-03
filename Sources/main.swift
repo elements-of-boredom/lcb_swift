@@ -17,10 +17,6 @@ guard let bucket = try? cluster.openBucket(name:"default") else {
 }
 print("Current libcouchbase version is:\(bucket.lcbVersion)")
 
-print("configThrottle:\(bucket.configThrottle)")
-for var x:Int32 in 1...90000000 {
-    bucket.configThrottle = x
-}
 let limit:Int32 = 900000003
 bucket.configThrottle = limit
 print("configThrottle is now \(limit)? \(bucket.configThrottle == limit)")

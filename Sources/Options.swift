@@ -11,44 +11,6 @@ import Foundation
 
 /// Sooo nothing going on in this file is "Ok". We'll need to fix it
 /// TODO:
-public protocol Options {
-    var expiry : Int32 {get set}
-    var persistTo : Int32 {get set}
-    var replicateTo : Int32 {get set}
-}
-
-public protocol CASOption {
-    var cas : UInt64 {get set}
-}
-
-public struct ReplaceOptions {
-    public var cas: UInt64 = 0
-
-    public var replicateTo: Int32 = 0
-    public var persistTo: Int32 = 0
-    public var expiry: Int32 = 0
-}
-
-public struct RemoveOptions {
-    public var cas: UInt64
-    
-    public var replicateTo: Int32 = 0
-    public var persistTo: Int32 = 0
-    public var expiry: Int32 = 0
-}
-
-public struct InsertOptions : Options {
-    public var cas: UInt64 = 0
-    public var persistTo: Int32 = 0
-    public var expiry: Int32 = 0
-    public var replicateTo: Int32 = 0
-}
-
-public struct UpsertOptions : Options {
-    public var persistTo: Int32 = 0
-    public var expiry: Int32 = 0
-    public var replicateTo: Int32 = 0
-}
 
 public struct GetOptions {
     public var expiry : UInt32 = 0
@@ -58,11 +20,20 @@ public struct GetOptions {
 }
 
 public struct StoreOptions {
+    public var persistTo : Int16 = 0
+    public var replicateTo : Int16 = 0
+    public var expiry : Int32 = 0
+    public var cas : UInt64 = 0
+}
+
+internal struct CmdOptions {
     public var operation : StorageOperation = .Upsert
     public var dataTypeFlags : DataFormat = .Json
     public var cas : UInt64 = 0
     public var expiry : Int32 = 0
     public var cmdflags : UInt32 = 0
+    public var persistTo : Int32 = 0
+    public var replicateTo : Int32 = 0
     
 }
 
@@ -70,5 +41,4 @@ public struct CounterOptions {
     public var replicateTo: Int32 = 0
     public var persistTo: Int32 = 0
     public var expiry: Int32 = 0
-    public var initial: Int64? = 0
 }

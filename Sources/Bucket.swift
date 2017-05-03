@@ -9,18 +9,11 @@
 import Foundation
 import libcouchbase
 
-public typealias OpCallback = (OperationResult)->()
-public typealias MultiCallback = (MultiCallbackResult)->()
-
-
 public class Bucket {
     private var instance : lcb_t?
     private let name:String
     private let userName:String
     private let password:String?
-    
-    private static var callbacks = [String:OpCallback]()
-    private static var multiCallbacks = [String:MultiCallback]()
     
     // - MARK: Members
     public let clientVersion : String = "0.1"
@@ -180,15 +173,12 @@ public class Bucket {
     private let get_callback:lcb_get_callback = {
         (instance, cookie, err, resp) -> Void in
         
-        //Early out if we have no completion callback
+        // If we have no callback, we don't need to do anything else
         guard let callback = cookie,
-            let uuid = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? String,
-            let completion = Bucket.callbacks[uuid] else{
-            return
+            let wrapper = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? CallbackDelegate,
+            let completion = wrapper.callback else {
+                return
         }
-        
-        //Clean up our callback.
-        Bucket.callbacks.removeValue(forKey: uuid)
         
         if err != LCB_SUCCESS {
             completion(OperationResult.Error(Bucket.lcb_errortext(instance,err)))
@@ -214,13 +204,10 @@ public class Bucket {
         (instance, cbtype, rb) -> Void in
         // If we have no callback, we don't need to do anything else
         guard let callback = rb?.pointee.cookie,
-            let uuid = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? String,
-            let completion = Bucket.callbacks[uuid]else {
+            let wrapper = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? CallbackDelegate,
+            let completion = wrapper.callback else {
                 return
         }
-        
-        //Clean up our callback.
-        Bucket.callbacks.removeValue(forKey: uuid)
         
         if let err = rb?.pointee.rc, err != LCB_SUCCESS {
             completion(OperationResult.Error(Bucket.lcb_errortext(instance,err)))
@@ -243,13 +230,11 @@ public class Bucket {
         
         // If we have no callback, we don't need to do anything else
         guard let callback = rb?.pointee.cookie,
-            let uuid = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? String,
-            let completion = Bucket.callbacks[uuid]else {
+            let wrapper = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? CallbackDelegate,
+            let completion = wrapper.callback else {
             return
         }
         
-        //Clean up our callback.
-        Bucket.callbacks.removeValue(forKey: uuid)
         
         if let err = rb?.pointee.rc, err != LCB_SUCCESS {
             completion(OperationResult.Error(Bucket.lcb_errortext(instance,err)))
@@ -260,7 +245,7 @@ public class Bucket {
             completion(OperationResult.Error("Success with No response found"))
             return
         }
-        
+
         completion(OperationResult.Success(value:nil, cas: response.cas))
     }
     
@@ -301,6 +286,7 @@ public class Bucket {
         lcb_set_get_callback(self.instance, get_callback)
         //lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_GET.rawValue), get_callback);
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_STORE.rawValue), set_callback);
+        lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_ENDURE.rawValue), set_callback);
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_REMOVE.rawValue), remove_callback)
     }
     
@@ -314,15 +300,15 @@ public class Bucket {
     ///   - options: options for the insert operation
     ///   - completion: Callback that will be called on operation completion
     /// - Throws: CouchbaseError.FailedOperationSchedule
-    public func append(key:String, value:String, options:Options = InsertOptions(), completion: @escaping OpCallback ) throws {
+    public func append(key:String, value:String, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
         ///TODO: acknowledge options
         
-        var storeOptions = StoreOptions()
-        storeOptions.dataTypeFlags = .Json //Encoder should eventually handle this
-        storeOptions.operation = .Append
-        storeOptions.expiry = options.expiry
+        var cmdOptions = CmdOptions()
+        cmdOptions.dataTypeFlags = .Json //Encoder should eventually handle this
+        cmdOptions.operation = .Append
+        cmdOptions.expiry = options.expiry
         
-        var cmd  = createStoreCMD(storeOptions, key: key)
+        var cmd  = createStoreCMD(cmdOptions, key: key)
         LCB_CMD_SET_VALUE(&cmd, value, value.utf8.count)
         
         try self.invokeStore(cmd: &cmd, callback: completion)
@@ -333,11 +319,13 @@ public class Bucket {
     ///
     /// - Parameters:
     ///   - key: Document Key
-    ///   - delta: The amount to add or subtract from the coutner value.
+    ///   - delta: The amount to add or subtract from the counter value.
     ///   - options: options for the counter operation
+    ///   - initial: Sets the initial value for the document if it does not exist. Not specifying a value will cause the operation
+    ///     to fail if the document does not exist.
     ///   - completion: callback which is called when the operation completes.
     /// - Throws: CouchbaseError.FailedOperationSchedule
-    public func counter(key:String, delta:Int64, options:CounterOptions?, completion: @escaping OpCallback) throws {
+    public func counter(key:String, delta:Int64, initial:Int64? = nil, options:CounterOptions?, completion: @escaping OpCallback) throws {
         var ccmd = lcb_CMDCOUNTER()
         ccmd.key.type = LCB_KV_COPY
         ccmd.key.contig.bytes = UnsafeRawPointer((key as NSString).utf8String!)
@@ -346,14 +334,15 @@ public class Bucket {
         if let opts = options {
             ccmd.exptime = lcb_U32(opts.expiry)
             ccmd.delta = delta
-            if let initial = opts.initial {
+            if let initial = initial {
                 ccmd.initial = lcb_U64(initial)
                 ccmd.create = 1
             }
         }
         
-        let uuid = storeCallback(callback: completion)
-        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+        let delegate = CallbackDelegate()
+        delegate.callback = completion
+        let retainedCookie = Unmanaged.passRetained(delegate)
         
         var err:lcb_error_t
         err = lcb_counter3(instance, retainedCookie.toOpaque(), &ccmd)
@@ -475,8 +464,9 @@ public class Bucket {
             getRCMD.strategy = LCB_REPLICA_FIRST
         }
         
-        let uuid = storeCallback(callback:completion)
-        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+        let delegate = CallbackDelegate()
+        delegate.callback = completion
+        let retainedCookie = Unmanaged.passRetained(delegate)
 
         var err:lcb_error_t
         err = lcb_rget3(instance, retainedCookie.toOpaque(), &getRCMD)
@@ -500,13 +490,13 @@ public class Bucket {
     ///   - options: options for the insert operation
     ///   - completion: Callback which is called on operation completion
     /// - Throws: CouchbaseError.FailedOperationSchedule
-    public func insert(key:String, value:Any, options:Options = InsertOptions(), completion: @escaping OpCallback ) throws {
+    public func insert(key:String, value:Any, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
         ///TODO: acknowledge options
         //eventually use a supplied encoder?
         guard let jsonString = try encodeValue(value: value) else {
             throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
         }
-        var storeOptions = StoreOptions()
+        var storeOptions = CmdOptions()
         storeOptions.dataTypeFlags = .Json //Encoder should eventually handle this
         storeOptions.operation = .Insert
         storeOptions.expiry = options.expiry
@@ -525,7 +515,7 @@ public class Bucket {
     ///   - options: options for the remove operation
     ///   - completion: Callback which is called on operation completion
     /// - Throws: CouchbaseError.FailedOperationSchedule
-    public func remove(key:String, options:RemoveOptions?, completion: @escaping OpCallback) throws {
+    public func remove(key:String, options:StoreOptions?, completion: @escaping OpCallback) throws {
         var rCMD = lcb_CMDREMOVE()
         rCMD.key.type = LCB_KV_COPY
         rCMD.key.contig.bytes = UnsafeRawPointer((key as NSString).utf8String!)
@@ -535,8 +525,9 @@ public class Bucket {
             rCMD.cas = opts.cas
         }
         
-        let uuid = storeCallback(callback: completion)
-        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+        let delegate = CallbackDelegate()
+        delegate.callback = completion
+        let retainedCookie = Unmanaged.passRetained(delegate)
         
         var err:lcb_error_t
         err = lcb_remove3(instance, retainedCookie.toOpaque(), &rCMD)
@@ -557,13 +548,13 @@ public class Bucket {
     ///   - options: options for a replace operation
     ///   - completion: Callback that will be called on operation completion
     /// - Throws: CouchbaseError.FailedOperationSchedule, FailedSerialization
-    public func replace(key:String, value:Any, options:ReplaceOptions = ReplaceOptions(), completion: @escaping OpCallback ) throws {
+    public func replace(key:String, value:Any, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
         ///TODO: acknowledge options
         //eventually use a supplied encoder?
         guard let jsonString = try encodeValue(value: value) else {
             throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
         }
-        var storeOptions = StoreOptions()
+        var storeOptions = CmdOptions()
         storeOptions.dataTypeFlags = .Json //Encoder should eventually handle this
         storeOptions.operation = .Upsert
         storeOptions.expiry = options.expiry
@@ -587,8 +578,9 @@ public class Bucket {
         var cmd = lcb_CMDTOUCH()
         cmd.exptime = expiry
         
-        let uuid = storeCallback(callback: completion)
-        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+        let delegate = CallbackDelegate()
+        delegate.callback = completion
+        let retainedCookie = Unmanaged.passRetained(delegate)
         
         var err:lcb_error_t
         err = lcb_touch3(instance, retainedCookie.toOpaque(), &cmd)
@@ -618,8 +610,9 @@ public class Bucket {
         cmd.cas = cas
         LCB_CMD_SET_KEY(&cmd, key,key.utf8.count)
         
-        let uuid = storeCallback(callback: completion)
-        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+        let delegate = CallbackDelegate()
+        delegate.callback = completion
+        let retainedCookie = Unmanaged.passRetained(delegate)
         
         var err:lcb_error_t
         err = lcb_unlock3(instance, retainedCookie.toOpaque(), &cmd)
@@ -642,13 +635,13 @@ public class Bucket {
     ///   - options: options for the Upsert operation
     ///   - completion: Callback that will be called on completion
     /// - Throws: CouchbaseError.FailedOperationSchedule
-    public func upsert(key:String, value:Any, options:Options = UpsertOptions(), completion: @escaping OpCallback ) throws {
+    public func upsert(key:String, value:Any, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
         ///TODO: acknowledge options
         //eventually use a supplied encoder?
         guard let jsonString = try encodeValue(value: value) else {
             throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
         }
-        var storeOptions = StoreOptions()
+        var storeOptions = CmdOptions()
         storeOptions.dataTypeFlags = .Json //Encoder should eventually handle this
         storeOptions.operation = .Upsert
         storeOptions.expiry = options.expiry
@@ -677,8 +670,10 @@ public class Bucket {
     }
     
     fileprivate func invokeGet(cmd: inout lcb_CMDGET, callback:@escaping OpCallback) throws {
-        let uuid = storeCallback(callback:callback)
-        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+        let delegate = CallbackDelegate()
+        delegate.callback = callback
+        
+        let retainedCookie = Unmanaged.passRetained(delegate)
         
         var err:lcb_error_t
         err = lcb_get3(instance, retainedCookie.toOpaque(), &cmd)
@@ -690,7 +685,7 @@ public class Bucket {
         lcb_wait(instance); // get_callback is invoked here
     }
     
-    fileprivate func createStoreCMD(_ options:StoreOptions, key:String) -> lcb_CMDSTORE {
+    fileprivate func createStoreCMD(_ options:CmdOptions, key:String) -> lcb_CMDSTORE {
         var storeCMD = lcb_CMDSTORE()
         storeCMD.cas = options.cas
         storeCMD.cmdflags = options.cmdflags
@@ -702,9 +697,10 @@ public class Bucket {
     }
     
     fileprivate func invokeStore(cmd: inout lcb_CMDSTORE, callback: @escaping OpCallback) throws {
+        let delegate = CallbackDelegate()
+        delegate.callback = callback
         
-        let uuid = storeCallback(callback: callback)
-        let retainedCookie = Unmanaged<AnyObject>.passRetained(uuid as AnyObject)
+        let retainedCookie = Unmanaged.passRetained(delegate)
         
         var err:lcb_error_t
         err = lcb_store3(instance, retainedCookie.toOpaque(), &cmd)
@@ -719,10 +715,44 @@ public class Bucket {
 
     }
     
-    fileprivate func storeCallback(callback:@escaping(OperationResult)->()) -> String {
-        let uuid = UUID().uuidString
-        Bucket.callbacks[uuid] = callback
-        return uuid
+    fileprivate func interceptEndure(key:String, options: StoreOptions, isDelete:Bool, callback:@escaping OpCallback) throws {
+        var dur_opts = lcb_durability_opts_t()
+        var durCMD = lcb_CMDENDURE()
+        
+        durCMD.key.type = LCB_KV_COPY
+        durCMD.key.contig.bytes = UnsafeRawPointer((key as NSString).utf8String!)
+        durCMD.key.contig.nbytes = key.utf8.count
+        durCMD.cas = options.cas
+
+        
+        dur_opts.v.v0.persist_to = lcb_U16(options.persistTo)
+        dur_opts.v.v0.replicate_to = lcb_U16(options.replicateTo)
+        dur_opts.v.v0.check_delete = isDelete ? 1 : 0
+        
+        let err = UnsafeMutablePointer<lcb_error_t>.allocate(capacity: 1)
+        let multiCMDCtx = lcb_endure3_ctxnew(instance, &dur_opts, err)
+        if err.pointee != LCB_SUCCESS {
+            let message = Bucket.lcb_errortext(instance, err.pointee)
+            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule durability operation! \(message)")
+        }
+        //Deal with the fact that lcb_CMDENDURE is build using complex macro's in C, and therefore
+        //there is no real relationship between lcb_CMDENDURE and lcb_CMDBASE
+        let unsafePointer = Unmanaged<AnyObject>.passUnretained(durCMD as AnyObject).toOpaque()
+        var castedCmd = Unmanaged<AnyObject>.fromOpaque(unsafePointer).takeUnretainedValue() as! lcb_CMDBASE
+        
+        var errCmd : lcb_error_t
+        if var cmd = multiCMDCtx?.pointee {
+            errCmd = cmd.addcmd(&cmd, &castedCmd)
+            if errCmd != LCB_SUCCESS {
+                let message = Bucket.lcb_errortext(instance, errCmd)
+                throw CouchbaseError.FailedOperationSchedule("Couldn't schedule durability operation! \(message)")
+            }
+            
+            //cmd.done(cmd,cookie)
+        } else {
+            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule durability operation, missing MultiCommand Context!")
+        }
+        
     }
     
     fileprivate func encodeValue(value:Any) throws -> String? {

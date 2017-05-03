@@ -255,6 +255,40 @@ public class Bucket {
         }
     }
     
+    private let n1ql_row_callback: lcb_N1QLCALLBACK = {
+        (instance, cbtype, resp) -> Void in
+        
+        guard let response = resp?.pointee,
+            let callback = response.cookie,
+            let lcb = instance, // If we don't have an instance thats a problem
+            let delegate = Unmanaged<AnyObject>.fromOpaque(callback).takeUnretainedValue() as? N1QLCallbackDelegate,
+            let completion = delegate.callback else {
+                return
+        }
+        
+        var data:String?
+        if (UInt32(response.rflags) & LCB_RESP_F_FINAL.rawValue) != 0 {
+            
+            if response.rc != LCB_SUCCESS {
+                //Error string parse
+                if let row = response.row {
+                    data = String(utf8String:row)
+                }
+            } else {
+                //Meta string parse
+                data = String(utf8String:response.row)
+            }
+            completion(OperationResult.Success(value: delegate.results, cas: 0))
+            //Balance out our retain cycle
+            _ = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? N1QLCallbackDelegate
+            return
+            
+        } else {
+            delegate.results.append(String(utf8String: response.row)!)
+        }
+
+    }
+    
     
     /// Default Bucket initializer
     ///
@@ -678,8 +712,55 @@ public class Bucket {
         
         try self.invokeStore(cmd: &cmd, options: cmdOptions, callback: completion)
     }
-
     
+    
+    // - MARK: SubDocument API
+    
+    public func lookupIn(key:String, specs:String) {
+        
+    }
+    
+    public func mutateIn(key:String, specs:String) {
+        
+    }
+    
+    // - MARK: MapReduce/Views
+    
+    public func query(design:String, view:String, isDevelopment:Bool) {
+        
+    }
+    
+    // - MARK: N1QL Query
+    
+    public func n1qlQuery(query:String, completion:@escaping OpCallback) throws {
+        
+        var n1CMD = lcb_CMDN1QL()
+        let params = lcb_n1p_new()
+        var err : lcb_error_t
+        err = lcb_n1p_setquery(params, (query as NSString).utf8String!, query.utf8.count, LCB_N1P_QUERY_STATEMENT)
+        print("lcb_n1p_setquery:\(Bucket.lcb_errortext(instance, err))")
+        //err = lcb_n1p_posparam(params, ("" as NSString).utf8String!, "".utf8.count)
+        print("posparam:\(Bucket.lcb_errortext(instance, err))")
+        err = lcb_n1p_mkcmd(params, &n1CMD)
+        print("lcb_n1p_mkcmd:\(Bucket.lcb_errortext(instance, err))")
+        
+        n1CMD.content_type = ("application/json" as NSString).utf8String!
+        n1CMD.callback = n1ql_row_callback
+        
+        let delegate = N1QLCallbackDelegate()
+        delegate.callback = completion
+        
+        let retainedCookie = Unmanaged.passRetained(delegate)
+        
+        err = lcb_n1ql_query(instance, retainedCookie.toOpaque(), &n1CMD)
+        if (err != LCB_SUCCESS) {
+            let message = Bucket.lcb_errortext(instance, err)
+            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
+        }
+        lcb_n1p_free(params)
+        lcb_wait(instance);
+        
+    }
     
     // - MARK: Private helpers
     

@@ -19,6 +19,25 @@ print("Current libcouchbase version is:\(bucket.lcbVersion)")
 
 let limit:Int32 = 900000003
 bucket.configThrottle = limit
+
+do {
+    let query = "select *, meta(default) from default"
+    try bucket.n1qlQuery(query: query) { result in
+        switch result {
+        case let .Success(value,cas):
+            print(value!)
+            print(cas)
+        case let .Error(msg):
+            print("Error:\(msg)")
+        }
+        dirty.signal()
+    }
+} catch let error {
+    print("Error: \(error)")
+    dirty.signal()
+}
+let _ = dirty.wait(timeout:DispatchTime.now() + .seconds(5))
+
 print("configThrottle is now \(limit)? \(bucket.configThrottle == limit)")
 do{
     print("The inserted key was:\(newkey)")

@@ -20,5 +20,16 @@ public typealias MultiCallback = (MultiCallbackResult)->()
 /// and be able to call it in Swift inside the response callbacks from libcouchbase
 internal class CallbackDelegate {
     var callback : OpCallback?
-    var multiCallback : MultiCallback?
+    
+    var persistTo : Int16
+    var replicateTo: Int16
+    var isDelete : Bool
+
+    
+    public init(isDelete:Bool = false, persistTo:Int16 = 0, replicateTo: Int16 = 0){
+        self.isDelete = isDelete
+        self.persistTo = persistTo
+        self.replicateTo = replicateTo
+        
+    }
 }

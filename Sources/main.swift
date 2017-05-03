@@ -22,7 +22,8 @@ bucket.configThrottle = limit
 print("configThrottle is now \(limit)? \(bucket.configThrottle == limit)")
 do{
     print("The inserted key was:\(newkey)")
-    try bucket.insert(key: newkey, value: d) { result in
+    let opts = StoreOptions(persistTo: 1, replicateTo: 0, expiry: 0, cas: 0)
+    try bucket.insert(key: newkey, value: d, options: opts) { result in
         switch result {
         case let .Success(cas):
             print(cas)
@@ -58,7 +59,7 @@ catch let error {
 let _ = dirty.wait(timeout:DispatchTime.now() + .seconds(3))
 
 do {
-    try bucket.remove(key: newkey, options: nil) { result in
+    try bucket.remove(key: newkey) { result in
         switch result {
         case let .Success(value,cas):
             print(cas)

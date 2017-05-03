@@ -32,13 +32,7 @@ internal struct CmdOptions {
     public var cas : UInt64 = 0
     public var expiry : Int32 = 0
     public var cmdflags : UInt32 = 0
-    public var persistTo : Int32 = 0
-    public var replicateTo : Int32 = 0
+    public var persistTo : Int16 = 0
+    public var replicateTo : Int16 = 0
     
-}
-
-public struct CounterOptions {
-    public var replicateTo: Int32 = 0
-    public var persistTo: Int32 = 0
-    public var expiry: Int32 = 0
 }

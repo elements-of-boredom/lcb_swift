@@ -10,12 +10,12 @@ import Foundation
 import libcouchbase
 
 public class Bucket {
-    private var instance : lcb_t?
+    fileprivate var instance : lcb_t?
     private let name:String
     private let userName:String
     private let password:String?
     
-    // - MARK: Members
+    // - MARK: Public Members
     public let clientVersion : String = "0.1"
     
     /// The amount of time (in microseconds) that the Bucket will wait before
@@ -169,8 +169,10 @@ public class Bucket {
         }
     }
 
-    // - MARK: Callbacks
-    private let get_callback:lcb_get_callback = {
+
+// - MARK: Callbacks
+
+    fileprivate let get_callback:lcb_get_callback = {
         (instance, cookie, err, resp) -> Void in
         
         // If we have no callback, we don't need to do anything else
@@ -200,7 +202,7 @@ public class Bucket {
         }
     }
     
-    private let remove_callback : lcb_RESPCALLBACK = {
+    fileprivate let remove_callback : lcb_RESPCALLBACK = {
         (instance, cbtype, rb) -> Void in
         // If we have no callback, we don't need to do anything else
         guard let callback = rb?.pointee.cookie,
@@ -225,7 +227,7 @@ public class Bucket {
     }
     // What is in respcallback 
     // http://docs.couchbase.com/sdk-api/couchbase-c-client-2.7.3/group__lcb-kv-api.html#structlcb___r_e_s_p_b_a_s_e
-    private let set_callback:lcb_RESPCALLBACK = {
+    fileprivate let set_callback:lcb_RESPCALLBACK = {
         (instance, cbtype, rb) -> Void in
         print("Is endure callback: \(LCB_CALLBACK_ENDURE.rawValue == UInt32(cbtype))")
         // If we have no callback, we don't need to do anything else
@@ -255,7 +257,7 @@ public class Bucket {
         }
     }
     
-    private let n1ql_row_callback: lcb_N1QLCALLBACK = {
+    fileprivate let n1ql_row_callback: lcb_N1QLCALLBACK = {
         (instance, cbtype, resp) -> Void in
         
         guard let response = resp?.pointee,
@@ -329,7 +331,10 @@ public class Bucket {
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_ENDURE.rawValue), set_callback);
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_REMOVE.rawValue), remove_callback)
     }
-    
+}
+
+// - MARK: Key based functions
+extension Bucket {
     
     /// Rather than setting the contents of the entire document, take the value specified and append it to the existing
     /// document value.
@@ -343,7 +348,7 @@ public class Bucket {
     public func append(key:String, value:String, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
         
         var cmdOptions = CmdOptions()
-        cmdOptions.dataTypeFlags = .Json //Encoder should eventually handle this
+        cmdOptions.dataTypeFlags = .Reserved //Encoder should eventually handle this
         cmdOptions.operation = .Append
         cmdOptions.expiry = options.expiry
         cmdOptions.persistTo = options.persistTo
@@ -558,7 +563,7 @@ public class Bucket {
     public func prepend(key:String, value:String, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
         
         var cmdOptions = CmdOptions()
-        cmdOptions.dataTypeFlags = .Json //Encoder should eventually handle this
+        cmdOptions.dataTypeFlags = .Reserved //Encoder should eventually handle this
         cmdOptions.operation = .Prepend
         cmdOptions.expiry = options.expiry
         cmdOptions.persistTo = options.persistTo
@@ -712,10 +717,11 @@ public class Bucket {
         
         try self.invokeStore(cmd: &cmd, options: cmdOptions, callback: completion)
     }
-    
-    
-    // - MARK: SubDocument API
-    
+}
+
+// - MARK: SubDocument API
+extension Bucket {
+
     public func lookupIn(key:String, specs:String) {
         
     }
@@ -731,7 +737,6 @@ public class Bucket {
     }
     
     // - MARK: N1QL Query
-    
     public func n1qlQuery(query:String, completion:@escaping OpCallback) throws {
         
         var n1CMD = lcb_CMDN1QL()
@@ -761,9 +766,10 @@ public class Bucket {
         lcb_wait(instance);
         
     }
-    
-    // - MARK: Private helpers
-    
+}
+
+// - MARK: Private helpers
+extension Bucket {
     /// Helper which consolidates lcbCMDGET initialization
     ///
     /// - Parameters:

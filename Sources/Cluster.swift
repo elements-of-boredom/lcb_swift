@@ -52,6 +52,7 @@ public class Cluster {
             throw LCBSwiftError.InvalidConnectionString("'\(connectionString)' is not valid, you may not specify a client_string")
         }
         
+        //We know they are there because of the above check, no point in checking them again.
         comps.queryItems?.append(URLQueryItem(name: "client_string", value: "lcbswift/\(Bucket.clientVersion)"))
         guard let modified = comps.url else {
             throw LCBSwiftError.InvalidConnectionString("Unable to append client_string, please report this bug")
@@ -83,7 +84,15 @@ public class Cluster {
         buckets.append(bucket)
         return bucket
     }
-    /// callback needs to be a function once we figure out what it is. ///TODO
+    
+    
+    /// Opens a bucket making it available for operation requests
+    ///
+    /// - Parameters:
+    ///   - name: The name of the bucket to open
+    ///   - password: password used to secure the bucket
+    /// - Returns: Bucket
+    /// - Throws: CouchbaseError.FailedInit, .FailedConnect
     public func openBucket(name:String, password:String) throws -> Bucket{
         let conn = bucketConnection(name: name)
         let bucket = try Bucket(bucketName: name, connection:conn, password: password)

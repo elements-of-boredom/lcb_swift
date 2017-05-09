@@ -24,7 +24,10 @@ print("Current libcouchbase version is:\(bucket.lcbVersion)")
 print("Current Op timeout:\(bucket.operationTimeout)")
 let limit:Int32 = 900000003
 bucket.configThrottle = limit
-let query = N1QLQuery(statement: "select name,age from default where name=$1",params:["greg"],namedParams:["dit":"to edit"])
+guard let query = try? N1QLQuery(statement: "select name,age from default where name=$1",params:["greg"],namedParams:["dit":"to edit"]) else {
+    print("Invalid query parameters")
+    exit(1)
+}
 
 print(query.query())
 

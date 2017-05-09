@@ -738,6 +738,24 @@ extension Bucket {
     }
     
     // - MARK: N1QL Query
+    
+    public func n1qlQuery(query:String, params:[String], completion:@escaping N1QLCallback) throws {
+        let n1qlQuery = try N1QLQuery(statement: query, params:params)
+        try self.n1qlQuery(query: n1qlQuery, completion: completion)
+    }
+    
+    public func n1qlQuery(query:String, params:[String:Any], completion:@escaping N1QLCallback) throws {
+        let n1qlQuery = try N1QLQuery(statement: query, namedParams:params)
+        try self.n1qlQuery(query: n1qlQuery, completion: completion)
+    }
+    
+    
+    /// Executes a previously prepared n1qlQuery object
+    ///
+    /// - Parameters:
+    ///   - query: Query object to execute
+    ///   - completion: N1QLCallback which is called upon completion
+    /// - Throws: CouchbaseError.FailedOperationSchedule
     public func n1qlQuery(query:N1QLQuery, completion:@escaping N1QLCallback) throws {
         
         var n1CMD = lcb_CMDN1QL()

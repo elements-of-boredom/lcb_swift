@@ -15,14 +15,20 @@ public class N1QLQuery {
     public var scanConsistency : N1QLScanConsitency
     
     
-    init(statement:String, params:[String] = [], namedParams:[String:Any] = [:], consistency:N1QLScanConsitency = .None) {
+    internal init(statement:String, params:[String] = [], namedParams:[String:Any] = [:], consistency:N1QLScanConsitency = .None) throws {
         self.statement = statement
         self.params = params
         self.namedParams = namedParams
         self.scanConsistency = consistency
+        
+        if !JSONSerialization.isValidJSONObject(namedParams) {
+            throw LCBSwiftError.InvalidQueryParameters("The parameters specified are unable to be serialized to JSON")
+        }
+        
+        
     }
     
-    public func query() -> String {
+    internal func query() -> String {
         var s :[String:Any] = ["statement":statement]
         _ = namedParams.map{ param in
             s["$\(param.key)"] = param.value
@@ -37,6 +43,20 @@ public class N1QLQuery {
         }
 
         return ""
+    }
+    
+    
+    /// Creates a N1QL query object directly from the provided query string
+    ///
+    /// - Parameters:
+    ///   - query: The N1QL query string
+    ///   - params: Array of string parameters used for positional arguments
+    ///   - namedParams: Dictionary of String:Any parameters used for named parameters.
+    ///     The value elements of the dictionary must be JSON serializable.
+    /// - Returns: a N1QLQuery object
+    /// - Throws: LCBSwiftError.InvalidQueryParameters
+    public static func fromString(query:String, params:[String] = [], namedParams:[String:Any] = [:]) throws -> N1QLQuery {
+        return try N1QLQuery(statement:query,params:params, namedParams:namedParams)
     }
     
 }

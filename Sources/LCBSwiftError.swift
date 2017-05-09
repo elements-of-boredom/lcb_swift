@@ -9,4 +9,5 @@
 import Foundation
 public enum LCBSwiftError : Error {
     case InvalidConnectionString(String)
+    case InvalidQueryParameters(String)
 }

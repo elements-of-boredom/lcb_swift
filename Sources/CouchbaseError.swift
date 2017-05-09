@@ -19,4 +19,5 @@ public enum CouchbaseError : Error {
     case FailedOperationSchedule(String)
     //Prolly shouldn't be here unless we make this a broader error enum ///TODO:
     case FailedSerialization(String)
+    case FailedN1QlQuery(String)
 }

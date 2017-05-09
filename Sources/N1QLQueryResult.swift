@@ -8,6 +8,7 @@
 
 import Foundation
 
-public class N1qlQueryResponse : QueryResponse {
-    
+public enum N1QLQueryResult {
+    case Error(String)
+    case Success(meta:Any?, rows:[Any])
 }

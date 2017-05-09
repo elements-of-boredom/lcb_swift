@@ -18,24 +18,24 @@ import libcouchbase
 /// complex macros
 func LCB_CMD_SET_KEY(_ cmd: inout lcb_CMDGET, _ key :String, _ len: Int) {
     cmd.key.type = LCB_KV_COPY
-    cmd.key.contig.bytes = UnsafeRawPointer((key as NSString).utf8String!)
+    cmd.key.contig.bytes = key.rawUTF8String
     cmd.key.contig.nbytes = len
 
 }
 func LCB_CMD_SET_KEY(_ cmd: inout lcb_CMDSTORE, _ key :String, _ len: Int) {
     cmd.key.type = LCB_KV_COPY
-    cmd.key.contig.bytes = UnsafeRawPointer((key as NSString).utf8String!)
+    cmd.key.contig.bytes = key.rawUTF8String
     cmd.key.contig.nbytes = len
 }
 
 func LCB_CMD_SET_KEY(_ cmd: inout lcb_CMDUNLOCK, _ key :String, _ len: Int) {
     cmd.key.type = LCB_KV_COPY
-    cmd.key.contig.bytes = UnsafeRawPointer((key as NSString).utf8String!)
+    cmd.key.contig.bytes = key.rawUTF8String
     cmd.key.contig.nbytes = len
 }
 
 func LCB_CMD_SET_VALUE(_ cmd: inout lcb_CMDSTORE, _ value: String, _ len: Int) {
     cmd.value.vtype = LCB_KV_COPY
-    cmd.value.u_buf.contig.bytes = UnsafeRawPointer((value as NSString).utf8String!)
+    cmd.value.u_buf.contig.bytes = value.rawUTF8String
     cmd.value.u_buf.contig.nbytes = len
 }

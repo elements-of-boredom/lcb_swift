@@ -16,7 +16,7 @@ public class Bucket {
     private let password:String?
     
     // - MARK: Public Members
-    public let clientVersion : String = "0.1"
+    public static let clientVersion : String = "0.1"
     
     /// The amount of time (in microseconds) that the Bucket will wait before
     /// forcing a configuration refresh. If no refresh occurs before this period
@@ -268,27 +268,32 @@ public class Bucket {
                 return
         }
         
-        var data:String?
+        //When we get the final response
         if (UInt32(response.rflags) & LCB_RESP_F_FINAL.rawValue) != 0 {
-            
+            //Claim our delegate using RetainedVavlue to prevent leaks.
+            _ = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? N1QLCallbackDelegate
             if response.rc != LCB_SUCCESS {
                 //Error string parse
                 if let row = response.row {
-                    data = String(utf8String:row)
+                    let data = String(utf8String:row)!
+                     completion(N1QLQueryResult.Error(data))
                 }
             } else {
                 //Meta string parse
-                data = String(utf8String:response.row)
+                let data = String(utf8String:response.row)!
+                var meta : Any?
+                if let metrics = data.data(using:.utf8), let result = try? Bucket.decodeValue(value:metrics) {
+                    meta = result
+                }
+                completion(N1QLQueryResult.Success(meta:meta, rows:delegate.rows))
             }
-            completion(OperationResult.Success(value: delegate.results, cas: 0))
-            //Balance out our retain cycle
-            _ = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? N1QLCallbackDelegate
-            return
             
         } else {
-            delegate.results.append(String(utf8String: response.row)!)
+            let value = String(bytesNoCopy:UnsafeMutableRawPointer(mutating:response.row),length:response.nrow, encoding:.utf8, freeWhenDone:false)!
+            if let result = try? Bucket.decodeValue(value:value.data(using:.utf8)!) {
+                delegate.rows.append(result)
+            }
         }
-
     }
     
     
@@ -296,17 +301,18 @@ public class Bucket {
     ///
     /// - Parameters:
     ///   - name: bucket name
-    ///   - connectionString: format of couchbase://ip1,dns2,ip3/bucketname
+    ///   - connection: URL in the format of couchbase://ip1,dns2,ip3/bucketname?options=values
     ///   - password: if provided will attempt SAML auth using password
     /// - Throws: CouchbaseError.FailedInit if connection fails
-    init(bucketName name:String, connectionString: String, password:String?) throws {
+    init(bucketName name:String, connection: URL, password:String?) throws {
         self.name = name
         self.password = password
         self.userName = name
         
         var cropts:lcb_create_st = lcb_create_st()
         cropts.version = 3;
-        cropts.v.v3.connstr = (connectionString as NSString).utf8String //NSString is used to interop with C
+        cropts.v.v3.connstr = connection.absoluteString.utf8String
+        
         
         //TODO: http://docs.couchbase.com/sdk-api/couchbase-c-client-2.4.0-beta/group___l_c_b___e_r_r_o_r_s.html
         //Actuall do something w/ the error maybe?
@@ -348,7 +354,7 @@ extension Bucket {
     public func append(key:String, value:String, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
         
         var cmdOptions = CmdOptions()
-        cmdOptions.dataTypeFlags = .Reserved //Encoder should eventually handle this
+        cmdOptions.dataTypeFlags = .Reserved
         cmdOptions.operation = .Append
         cmdOptions.expiry = options.expiry
         cmdOptions.persistTo = options.persistTo
@@ -374,7 +380,7 @@ extension Bucket {
     public func counter(key:String, delta:Int64, initial:Int64? = nil, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback) throws {
         var ccmd = lcb_CMDCOUNTER()
         ccmd.key.type = LCB_KV_COPY
-        ccmd.key.contig.bytes = UnsafeRawPointer((key as NSString).utf8String!)
+        ccmd.key.contig.bytes = UnsafeRawPointer(key.cString(using: .utf8))
         ccmd.key.contig.nbytes = key.utf8.count
 
         ccmd.exptime = lcb_U32(options.expiry)
@@ -533,13 +539,12 @@ extension Bucket {
     ///   - completion: Callback which is called on operation completion
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func insert(key:String, value:Any, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
-        ///TODO: acknowledge options
-        //eventually use a supplied encoder?
+        
         guard let jsonString = try encodeValue(value: value) else {
             throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
         }
         var cmdOptions = CmdOptions()
-        cmdOptions.dataTypeFlags = .Json //Encoder should eventually handle this
+        cmdOptions.dataTypeFlags = .Json
         cmdOptions.operation = .Insert
         cmdOptions.expiry = options.expiry
         cmdOptions.persistTo = options.persistTo
@@ -563,7 +568,7 @@ extension Bucket {
     public func prepend(key:String, value:String, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
         
         var cmdOptions = CmdOptions()
-        cmdOptions.dataTypeFlags = .Reserved //Encoder should eventually handle this
+        cmdOptions.dataTypeFlags = .Reserved
         cmdOptions.operation = .Prepend
         cmdOptions.expiry = options.expiry
         cmdOptions.persistTo = options.persistTo
@@ -586,7 +591,7 @@ extension Bucket {
     public func remove(key:String, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback) throws {
         var rCMD = lcb_CMDREMOVE()
         rCMD.key.type = LCB_KV_COPY
-        rCMD.key.contig.bytes = UnsafeRawPointer((key as NSString).utf8String!)
+        rCMD.key.contig.bytes = UnsafeRawPointer(key.cString(using: .utf8))
         rCMD.key.contig.nbytes = key.utf8.count
         rCMD.cas = options.cas
         
@@ -613,13 +618,12 @@ extension Bucket {
     ///   - completion: Callback that will be called on operation completion
     /// - Throws: CouchbaseError.FailedOperationSchedule, FailedSerialization
     public func replace(key:String, value:Any, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
-        ///TODO: acknowledge options
-        //eventually use a supplied encoder?
+
         guard let jsonString = try encodeValue(value: value) else {
             throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
         }
         var cmdOptions = CmdOptions()
-        cmdOptions.dataTypeFlags = .Json //Encoder should eventually handle this
+        cmdOptions.dataTypeFlags = .Json
         cmdOptions.operation = .Upsert
         cmdOptions.expiry = options.expiry
         cmdOptions.persistTo = options.persistTo
@@ -668,9 +672,7 @@ extension Bucket {
     ///   - completion: Callback that will be called on operation completion
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func unlock(key:String, cas:UInt64, completion: @escaping OpCallback ) throws {
-        ///TODO: acknowledge options
-        //eventually use a supplied encoder?
-        
+
         var cmd  = lcb_CMDUNLOCK()
         cmd.cas = cas
         LCB_CMD_SET_KEY(&cmd, key,key.utf8.count)
@@ -700,13 +702,12 @@ extension Bucket {
     ///   - completion: Callback that will be called on completion
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func upsert(key:String, value:Any, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
-        ///TODO: acknowledge options
-        //eventually use a supplied encoder?
+
         guard let jsonString = try encodeValue(value: value) else {
             throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
         }
         var cmdOptions = CmdOptions()
-        cmdOptions.dataTypeFlags = .Json //Encoder should eventually handle this
+        cmdOptions.dataTypeFlags = .Json
         cmdOptions.operation = .Upsert
         cmdOptions.expiry = options.expiry
         cmdOptions.persistTo = options.persistTo
@@ -737,19 +738,20 @@ extension Bucket {
     }
     
     // - MARK: N1QL Query
-    public func n1qlQuery(query:String, completion:@escaping OpCallback) throws {
+    public func n1qlQuery(query:N1QLQuery, completion:@escaping N1QLCallback) throws {
         
         var n1CMD = lcb_CMDN1QL()
-        let params = lcb_n1p_new()
         var err : lcb_error_t
-        err = lcb_n1p_setquery(params, (query as NSString).utf8String!, query.utf8.count, LCB_N1P_QUERY_STATEMENT)
-        print("lcb_n1p_setquery:\(Bucket.lcb_errortext(instance, err))")
-        //err = lcb_n1p_posparam(params, ("" as NSString).utf8String!, "".utf8.count)
-        print("posparam:\(Bucket.lcb_errortext(instance, err))")
-        err = lcb_n1p_mkcmd(params, &n1CMD)
-        print("lcb_n1p_mkcmd:\(Bucket.lcb_errortext(instance, err))")
         
-        n1CMD.content_type = ("application/json" as NSString).utf8String!
+        let statement = query.query()
+        n1CMD.query = statement.utf8String
+        n1CMD.nquery = statement.utf8.count
+        
+        if !query.isAdHoc {
+            n1CMD.cmdflags |= UInt32(LCB_CMDN1QL_F_PREPCACHE)
+        }
+        
+        n1CMD.content_type = "application/json".utf8String
         n1CMD.callback = n1ql_row_callback
         
         let delegate = N1QLCallbackDelegate()
@@ -762,7 +764,6 @@ extension Bucket {
             let message = Bucket.lcb_errortext(instance, err)
             throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
-        lcb_n1p_free(params)
         lcb_wait(instance);
         
     }
@@ -898,7 +899,7 @@ extension Bucket {
         //the actual item in memory so we can use it when calling the api, but not as an argument.
         //All ForcedUnwraps are therefore gauranteed because we first checked here.
         if let cmd = multiCMDCtx?.pointee {
-            //Deal with the fact that lcb_CMDENDURE is build using complex macro's in C, and therefore
+            //Deal with the fact that lcb_CMDENDURE is built using complex macro's in C, and therefore
             //there is no real relationship between lcb_CMDENDURE and lcb_CMDBASE
             withUnsafePointer(to: &durCMD) {
                 $0.withMemoryRebound(to: lcb_CMDBASE.self, capacity: 1) { cmdbase in
@@ -928,8 +929,17 @@ extension Bucket {
     }
     
     fileprivate func encodeValue(value:Any) throws -> String? {
-        return String(data: try JSONSerialization.data(withJSONObject: value, options: .prettyPrinted), encoding:.utf8)
+        if JSONSerialization.isValidJSONObject(value) {
+            return String(data: try JSONSerialization.data(withJSONObject: value, options: .prettyPrinted), encoding:.utf8)
+        }
+        throw CouchbaseError.FailedSerialization("Value provided is not in a format that can be json serialized")
         
+    }
+    
+    fileprivate static func decodeValue(value:Data) throws -> Any {
+        return try autoreleasepool {
+            return try JSONSerialization.jsonObject(with: value, options: [])
+        }
     }
     
     ///May want to move this guy somewhere more accessible later 

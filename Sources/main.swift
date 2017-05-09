@@ -4,9 +4,14 @@ import libcouchbase
 // Nothing in this file should live longer than it takes me to get actual tests setup
 /// TODO:
 
-var d = [["name":"greg"], ["age": arc4random()]]
+let connstr = "couchbase://localhost,127.0.0.1/default"
 
-let cluster = Cluster()
+var d = ["name":"greg", "age":arc4random()] as [String : Any]
+
+guard let cluster = try? Cluster(connectionString:connstr) else {
+    print("failed to initialize cluster")
+    exit(1)
+}
 var dirty = DispatchSemaphore(value:0)
 
 let newkey = "key-\(UUID().uuidString)"
@@ -16,17 +21,20 @@ guard let bucket = try? cluster.openBucket(name:"default") else {
     exit(1)
 }
 print("Current libcouchbase version is:\(bucket.lcbVersion)")
-
+print("Current Op timeout:\(bucket.operationTimeout)")
 let limit:Int32 = 900000003
 bucket.configThrottle = limit
+let query = N1QLQuery(statement: "select name,age from default where name=$1",params:["greg"],namedParams:["dit":"to edit"])
+
+print(query.query())
 
 do {
-    let query = "select *, meta(default) from default"
     try bucket.n1qlQuery(query: query) { result in
         switch result {
-        case let .Success(value,cas):
-            print(value!)
-            print(cas)
+        case let .Success(meta,rows):
+            //print(meta!)
+            print(rows)
+            break;
         case let .Error(msg):
             print("Error:\(msg)")
         }
@@ -57,6 +65,24 @@ do{
     dirty.signal()
 }
 let _ = dirty.wait(timeout:DispatchTime.now() + .seconds(3))
+
+do {
+    try bucket.n1qlQuery(query: query) { result in
+        switch result {
+        case let .Success(meta,rows):
+            //print(meta!)
+            print(rows)
+            break;
+        case let .Error(msg):
+            print("Error:\(msg)")
+        }
+        dirty.signal()
+    }
+} catch let error {
+    print("Error: \(error)")
+    dirty.signal()
+}
+let _ = dirty.wait(timeout:DispatchTime.now() + .seconds(5))
 
 do {
     try bucket.get(key:newkey) { result in

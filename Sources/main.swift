@@ -21,10 +21,8 @@ guard let bucket = try? cluster.openBucket(name:"default") else {
     exit(1)
 }
 print("Current libcouchbase version is:\(bucket.lcbVersion)")
-print("Current Op timeout:\(bucket.operationTimeout)")
-let limit:Int32 = 900000003
-bucket.configThrottle = limit
-guard let query = try? N1QLQuery(statement: "select name,age from default where name=$1",params:["greg"],namedParams:["dit":"to edit"]) else {
+
+guard let query = try? N1QLQuery(statement: "select name,age from default where name=$1",params:["greg"],namedParams:["dit":"to edit"], consistency:.None) else {
     print("Invalid query parameters")
     exit(1)
 }
@@ -49,7 +47,6 @@ do {
 }
 let _ = dirty.wait(timeout:DispatchTime.now() + .seconds(5))
 
-print("configThrottle is now \(limit)? \(bucket.configThrottle == limit)")
 do{
     print("The inserted key was:\(newkey)")
     let opts = StoreOptions(persistTo: 1, replicateTo: 0, expiry: 0, cas: 0)
@@ -68,24 +65,6 @@ do{
     dirty.signal()
 }
 let _ = dirty.wait(timeout:DispatchTime.now() + .seconds(3))
-
-do {
-    try bucket.n1qlQuery(query: query) { result in
-        switch result {
-        case let .Success(meta,rows):
-            //print(meta!)
-            print(rows)
-            break;
-        case let .Error(msg):
-            print("Error:\(msg)")
-        }
-        dirty.signal()
-    }
-} catch let error {
-    print("Error: \(error)")
-    dirty.signal()
-}
-let _ = dirty.wait(timeout:DispatchTime.now() + .seconds(5))
 
 do {
     try bucket.get(key:newkey) { result in

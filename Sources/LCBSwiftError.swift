@@ -10,4 +10,7 @@ import Foundation
 public enum LCBSwiftError : Error {
     case InvalidConnectionString(String)
     case InvalidQueryParameters(String)
+    
+    //Used for items in progress or waiting for definition
+    case NotImplemented(String)
 }

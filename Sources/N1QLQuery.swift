@@ -21,6 +21,10 @@ public class N1QLQuery {
         self.namedParams = namedParams
         self.scanConsistency = consistency
         
+        if consistency != .None {
+            throw LCBSwiftError.NotImplemented("Currently only .None is acknowledged")
+        }
+        
         if !JSONSerialization.isValidJSONObject(namedParams) {
             throw LCBSwiftError.InvalidQueryParameters("The parameters specified are unable to be serialized to JSON")
         }
@@ -35,6 +39,8 @@ public class N1QLQuery {
         }
         
         s["args"] = params
+        
+        s["scan_consistency"] = scanConsistency.description()
         
         if let json = try? JSONSerialization.data(withJSONObject: s, options:[]) {
             if let content = String(data:json, encoding:.utf8) {

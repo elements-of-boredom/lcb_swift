@@ -380,7 +380,7 @@ extension Bucket {
     public func counter(key:String, delta:Int64, initial:Int64? = nil, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback) throws {
         var ccmd = lcb_CMDCOUNTER()
         ccmd.key.type = LCB_KV_COPY
-        ccmd.key.contig.bytes = UnsafeRawPointer(key.cString(using: .utf8))
+        ccmd.key.contig.bytes = key.rawUTF8String
         ccmd.key.contig.nbytes = key.utf8.count
 
         ccmd.exptime = lcb_U32(options.expiry)
@@ -591,7 +591,7 @@ extension Bucket {
     public func remove(key:String, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback) throws {
         var rCMD = lcb_CMDREMOVE()
         rCMD.key.type = LCB_KV_COPY
-        rCMD.key.contig.bytes = UnsafeRawPointer(key.cString(using: .utf8))
+        rCMD.key.contig.bytes = key.rawUTF8String
         rCMD.key.contig.nbytes = key.utf8.count
         rCMD.cas = options.cas
         

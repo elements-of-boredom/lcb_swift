@@ -12,10 +12,10 @@ public class N1QLQuery {
     public var isAdHoc : Bool = true
     public let params : [String]
     public let namedParams : [String:Any]
-    public var scanConsistency : N1QLScanConsitency
+    public var scanConsistency : N1QLScanConsistency
     
     
-    internal init(statement:String, params:[String] = [], namedParams:[String:Any] = [:], consistency:N1QLScanConsitency = .None) throws {
+    internal init(statement:String, params:[String] = [], namedParams:[String:Any] = [:], consistency:N1QLScanConsistency = .None) throws {
         self.statement = statement
         self.params = params
         self.namedParams = namedParams

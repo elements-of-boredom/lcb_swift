@@ -17,7 +17,7 @@ import Foundation
 ///   scan_vector (timestamp) which is generated for you at time of Query creation.
 /// - Statement: Highest consistency level, requres all mutations up to the point of the query request to be processed
 ///   before the query execution can start.
-public enum N1QLScanConsitency {
+public enum N1QLScanConsistency {
     case None
     case Request
     case Statement

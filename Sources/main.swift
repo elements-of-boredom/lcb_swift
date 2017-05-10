@@ -31,7 +31,7 @@ print(query.query())
 
 do {
     for i in 1...5000 {
-    try bucket.n1qlQuery(query: query) { result in
+    try bucket.query(query: query) { result in
         switch result {
         case let .Success(meta,rows):
             //print(meta!)

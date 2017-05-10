@@ -18,7 +18,7 @@ public class Bucket {
     /// Default Bucket initializer
     ///
     /// - Parameters:
-    ///   - name: bucket name
+    ///   - name: bucket name - This is for identifying the object and NOT part of the connection value.
     ///   - connection: URL in the format of couchbase://ip1,dns2,ip3/bucketname?options=values
     ///   - password: if provided will attempt SAML auth using password
     /// - Throws: CouchbaseError.FailedInit if connection fails
@@ -616,6 +616,12 @@ extension Bucket {
         }
     }
     
+    
+    /// Encodes an encodable value into a JSON string
+    ///
+    /// - Parameter value: value attempting to be encoded
+    /// - Returns: JSON encoded string.
+    /// - Throws: When the value cannot be encoded, or if during encoding there is an error
     internal static func encodeValue(value:Any) throws -> String? {
         if JSONSerialization.isValidJSONObject(value) {
             return String(data: try JSONSerialization.data(withJSONObject: value, options: .prettyPrinted), encoding:.utf8)

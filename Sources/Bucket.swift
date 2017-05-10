@@ -15,135 +15,6 @@ public class Bucket {
     private let userName:String
     private let password:String?
     
-// - MARK: Callbacks
-
-    fileprivate let get_callback:lcb_get_callback = {
-        (instance, cookie, err, resp) -> Void in
-        
-        // If we have no callback, we don't need to do anything else
-        guard let callback = cookie,
-            let wrapper = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? CallbackDelegate,
-            let completion = wrapper.callback else {
-                return
-        }
-        
-        if err != LCB_SUCCESS {
-            completion(OperationResult.Error(Bucket.lcb_errortext(instance,err)))
-            return
-        }
-        
-        guard let response = resp?.pointee.v.v0 else{
-            completion(OperationResult.Error("Success with No response found"))
-            return
-        }
-        
-        let bytes = Data(bytes:response.bytes, count:response.nbytes)
-        let value = String(data: bytes , encoding: String.Encoding.utf8)!
-        do {
-            var json = try JSONSerialization.jsonObject(with: bytes, options: [])
-            completion(OperationResult.Success(value: json, cas: response.cas))
-        } catch {
-            completion(OperationResult.Error("Serialization error: \(error.localizedDescription)"))
-        }
-    }
-    
-    fileprivate let remove_callback : lcb_RESPCALLBACK = {
-        (instance, cbtype, rb) -> Void in
-        // If we have no callback, we don't need to do anything else
-        guard let callback = rb?.pointee.cookie,
-            let wrapper = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? CallbackDelegate,
-            let completion = wrapper.callback else {
-                return
-        }
-        
-        if let err = rb?.pointee.rc, err != LCB_SUCCESS {
-            completion(OperationResult.Error(Bucket.lcb_errortext(instance,err)))
-            return
-        }
-        
-        guard let response = rb?.pointee else {
-            completion(OperationResult.Error("Success with No response found"))
-            return
-        }
-        
-        completion(OperationResult.Success(value:nil, cas: response.cas))
-
-
-    }
-    // What is in respcallback 
-    // http://docs.couchbase.com/sdk-api/couchbase-c-client-2.7.3/group__lcb-kv-api.html#structlcb___r_e_s_p_b_a_s_e
-    fileprivate let set_callback:lcb_RESPCALLBACK = {
-        (instance, cbtype, rb) -> Void in
-        print("Is endure callback: \(LCB_CALLBACK_ENDURE.rawValue == UInt32(cbtype))")
-        // If we have no callback, we don't need to do anything else
-        guard let callback = rb?.pointee.cookie,
-            let lcb = instance, // If we don't have an instance thats a problem
-            let delegate = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? CallbackDelegate,
-            let completion = delegate.callback else {
-            return
-        }
-        
-        
-        if let err = rb?.pointee.rc, err != LCB_SUCCESS {
-            completion(OperationResult.Error(Bucket.lcb_errortext(instance,err)))
-            return
-        }
-        
-        guard let response = rb?.pointee else {
-            completion(OperationResult.Error("Success with No response found"))
-            return
-        }
-        
-        //No durability constraints means we can move on.
-        if delegate.persistTo == 0 && delegate.replicateTo == 0 {
-            completion(OperationResult.Success(value:nil, cas: response.cas))
-        } else {
-            Bucket.endure(instance:lcb, response:response, delegate:delegate)
-        }
-    }
-    
-    fileprivate let n1ql_row_callback: lcb_N1QLCALLBACK = {
-        (instance, cbtype, resp) -> Void in
-        
-        guard let response = resp?.pointee,
-            let callback = response.cookie,
-            let lcb = instance, // If we don't have an instance thats a problem
-            let delegate = Unmanaged<AnyObject>.fromOpaque(callback).takeUnretainedValue() as? N1QLCallbackDelegate,
-            let completion = delegate.callback else {
-                return
-        }
-        
-        //When we get the final response
-        if (UInt32(response.rflags) & LCB_RESP_F_FINAL.rawValue) != 0 {
-            //Claim our delegate using RetainedVavlue to prevent leaks.
-            _ = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? N1QLCallbackDelegate
-            if response.rc != LCB_SUCCESS {
-                //Error string parse
-                if let row = response.row {
-                    let data = String(utf8String:row)!
-                     completion(N1QLQueryResult.Error(data))
-                }
-            } else {
-                //Meta string parse
-                let data = String(utf8String:response.row)!
-                var meta : Any?
-                
-                 if let result = try? Bucket.decodeValue(value:data) {
-                        meta = result
-                }
-                completion(N1QLQueryResult.Success(meta:meta, rows:delegate.rows))
-                
-            }
-            
-        } else {
-            let value = String(bytesNoCopy:UnsafeMutableRawPointer(mutating:response.row),length:response.nrow, encoding:.utf8, freeWhenDone:false)!
-            if let result = try? Bucket.decodeValue(value:value) {
-                delegate.rows.append(result)
-            }
-        }
-    }
-    
-    
     /// Default Bucket initializer
     ///
     /// - Parameters:
@@ -178,11 +49,11 @@ public class Bucket {
         }
         
         //register callback
-        lcb_set_get_callback(self.instance, get_callback)
+        lcb_set_get_callback(self.instance, BucketCallbacks.get_callback)
         //lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_GET.rawValue), get_callback);
-        lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_STORE.rawValue), set_callback);
-        lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_ENDURE.rawValue), set_callback);
-        lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_REMOVE.rawValue), remove_callback)
+        lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_STORE.rawValue), BucketCallbacks.set_callback);
+        lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_ENDURE.rawValue), BucketCallbacks.set_callback);
+        lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_REMOVE.rawValue), BucketCallbacks.remove_callback)
     }
 }
 
@@ -246,7 +117,7 @@ extension Bucket {
         //Need to handle completion call here if we failed to schedule
         //or completion will never be called on failure
         if (err != LCB_SUCCESS) {
-            let message = Bucket.lcb_errortext(instance, err)
+            let message = lcb_errortext(instance, err)
             throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // get_callback is invoked here
@@ -369,7 +240,7 @@ extension Bucket {
         //Need to handle completion call here if we failed to schedule
         //or completion will never be called on failure
         if (err != LCB_SUCCESS) {
-            let message = Bucket.lcb_errortext(instance, err)
+            let message = lcb_errortext(instance, err)
             throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // get_callback is invoked here
@@ -387,7 +258,7 @@ extension Bucket {
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func insert(key:String, value:Any, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
         
-        guard let jsonString = try encodeValue(value: value) else {
+        guard let jsonString = try Bucket.encodeValue(value: value) else {
             throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
         }
         var cmdOptions = CmdOptions()
@@ -449,7 +320,7 @@ extension Bucket {
         let err = lcb_remove3(instance, retainedCookie.toOpaque(), &rCMD)
         
         if (err != LCB_SUCCESS) {
-            let message = Bucket.lcb_errortext(instance, err)
+            let message = lcb_errortext(instance, err)
             throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // get_callback is invoked here
@@ -466,7 +337,7 @@ extension Bucket {
     /// - Throws: CouchbaseError.FailedOperationSchedule, FailedSerialization
     public func replace(key:String, value:Any, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
-        guard let jsonString = try encodeValue(value: value) else {
+        guard let jsonString = try Bucket.encodeValue(value: value) else {
             throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
         }
         var cmdOptions = CmdOptions()
@@ -504,7 +375,7 @@ extension Bucket {
         //Need to handle completion call here if we failed to schedule
         //or completion will never be called on failure
         if (err != LCB_SUCCESS) {
-            let message = Bucket.lcb_errortext(instance, err)
+            let message = lcb_errortext(instance, err)
             throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // set_callback is invoked here
@@ -533,7 +404,7 @@ extension Bucket {
         //Need to handle completion call here if we failed to schedule
         //or completion will never be called on failure
         if (err != LCB_SUCCESS) {
-            let message = Bucket.lcb_errortext(instance, err)
+            let message = lcb_errortext(instance, err)
             throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // set_callback is invoked here
@@ -550,7 +421,7 @@ extension Bucket {
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func upsert(key:String, value:Any, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
-        guard let jsonString = try encodeValue(value: value) else {
+        guard let jsonString = try Bucket.encodeValue(value: value) else {
             throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
         }
         var cmdOptions = CmdOptions()
@@ -584,54 +455,6 @@ extension Bucket {
         
     }
     
-    // - MARK: N1QL Query
-    
-    public func n1qlQuery(query:String, params:[String], completion:@escaping N1QLCallback) throws {
-        let n1qlQuery = try N1QLQuery(statement: query, params:params)
-        try self.n1qlQuery(query: n1qlQuery, completion: completion)
-    }
-    
-    public func n1qlQuery(query:String, params:[String:Any], completion:@escaping N1QLCallback) throws {
-        let n1qlQuery = try N1QLQuery(statement: query, namedParams:params)
-        try self.n1qlQuery(query: n1qlQuery, completion: completion)
-    }
-    
-    
-    /// Executes a previously prepared n1qlQuery object
-    ///
-    /// - Parameters:
-    ///   - query: Query object to execute
-    ///   - completion: N1QLCallback which is called upon completion
-    /// - Throws: CouchbaseError.FailedOperationSchedule
-    public func n1qlQuery(query:N1QLQuery, completion:@escaping N1QLCallback) throws {
-        
-        var n1CMD = lcb_CMDN1QL()
-        var err : lcb_error_t
-        
-        let statement = query.query()
-        n1CMD.query = statement.utf8String
-        n1CMD.nquery = statement.utf8.count
-        
-        if !query.isAdHoc {
-            n1CMD.cmdflags |= UInt32(LCB_CMDN1QL_F_PREPCACHE)
-        }
-        
-        n1CMD.content_type = "application/json".utf8String
-        n1CMD.callback = n1ql_row_callback
-        
-        let delegate = N1QLCallbackDelegate()
-        delegate.callback = completion
-        
-        let retainedCookie = Unmanaged.passRetained(delegate)
-        
-        err = lcb_n1ql_query(instance, retainedCookie.toOpaque(), &n1CMD)
-        if (err != LCB_SUCCESS) {
-            let message = Bucket.lcb_errortext(instance, err)
-            throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
-        }
-        lcb_wait(instance);
-        
-    }
 }
 
 // - MARK: Private helpers
@@ -690,7 +513,7 @@ extension Bucket {
         let err = lcb_get3(instance, retainedCookie.toOpaque(), &cmd)
         
         if (err != LCB_SUCCESS) {
-            let message = Bucket.lcb_errortext(instance, err)
+            let message = lcb_errortext(instance, err)
             throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // get_callback is invoked here
@@ -715,7 +538,7 @@ extension Bucket {
         //Need to handle completion call here if we failed to schedule
         //or completion will never be called on failure
         if (err != LCB_SUCCESS) {
-            let message = Bucket.lcb_errortext(instance, err)
+            let message = lcb_errortext(instance, err)
             throw CouchbaseError.FailedOperationSchedule("Couldn't schedule operation! \(message)")
         }
         lcb_wait(instance); // set_callback is invoked here
@@ -729,7 +552,7 @@ extension Bucket {
     ///   - instance: instance of libcouchbase on which to schedule the operation
     ///   - response: libcouchbase response which is the result of the operation we want to ensure durability on
     ///   - delegate: user supplied callback to call on completion
-    fileprivate static func endure(instance:lcb_t, response:lcb_RESPBASE, delegate : CallbackDelegate) {
+    internal static func endure(instance:lcb_t, response:lcb_RESPBASE, delegate : CallbackDelegate) {
         
         //This shouldn't happen as it is checked before calling endure
         //but just to safeguard, if we don't have a user completion
@@ -753,7 +576,7 @@ extension Bucket {
         let err = UnsafeMutablePointer<lcb_error_t>.allocate(capacity: 1)
         let multiCMDCtx = lcb_endure3_ctxnew(instance, &dur_opts, err)
         if err.pointee != LCB_SUCCESS {
-            let message = Bucket.lcb_errortext(instance, err.pointee)
+            let message = lcb_errortext(instance, err.pointee)
             callback(OperationResult.Error("Couldn't schedule durability operation! \(message)"))
         }
         
@@ -771,7 +594,7 @@ extension Bucket {
                     let errCmd = cmd.addcmd(&multiCMDCtx!.pointee, cmdbase)
                     if errCmd != LCB_SUCCESS {
                         cmd.fail(&multiCMDCtx!.pointee)
-                        let message = Bucket.lcb_errortext(instance, errCmd)
+                        let message = lcb_errortext(instance, errCmd)
                         callback(OperationResult.Error("Couldn't schedule durability operation! \(message)"))
                     }
                 }
@@ -784,7 +607,7 @@ extension Bucket {
             
             let err = cmd.done(&multiCMDCtx!.pointee,retainedCookie.toOpaque())
             if err != LCB_SUCCESS {
-                let message = Bucket.lcb_errortext(instance, err)
+                let message = lcb_errortext(instance, err)
                 callback(OperationResult.Error("Unable to schedule durability operation! \(message)"))
             }
             
@@ -793,7 +616,7 @@ extension Bucket {
         }
     }
     
-    fileprivate func encodeValue(value:Any) throws -> String? {
+    internal static func encodeValue(value:Any) throws -> String? {
         if JSONSerialization.isValidJSONObject(value) {
             return String(data: try JSONSerialization.data(withJSONObject: value, options: .prettyPrinted), encoding:.utf8)
         }
@@ -809,7 +632,7 @@ extension Bucket {
     /// - Parameter value: json string to decode
     /// - Returns: Returns a Foundation object from given JSON data.
     /// - Throws: exceptions
-    fileprivate static func decodeValue(value:String) throws -> Any {
+    internal static func decodeValue(value:String) throws -> Any {
         return try autoreleasepool {
             if let value = value.data(using: .utf8) {
                 return try JSONSerialization.jsonObject(with: value, options: [])
@@ -817,16 +640,4 @@ extension Bucket {
             throw LCBSwiftError.NotImplemented("Placeholder")
         }
     }
-    
-    ///May want to move this guy somewhere more accessible later 
-    ///TODO:
-    fileprivate static func lcb_errortext(_ instance:lcb_t?, _ error: lcb_error_t) -> String {
-        if let instance = instance,
-            let errorMessage = lcb_strerror(instance,error),
-            let message = String(utf8String:errorMessage) {
-            return message
-        }
-        return "Failed with unknown error: \(error)"
-    }
-    
 }

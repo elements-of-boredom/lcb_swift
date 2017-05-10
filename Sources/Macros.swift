@@ -39,3 +39,13 @@ func LCB_CMD_SET_VALUE(_ cmd: inout lcb_CMDSTORE, _ value: String, _ len: Int) {
     cmd.value.u_buf.contig.bytes = value.rawUTF8String
     cmd.value.u_buf.contig.nbytes = len
 }
+
+func lcb_errortext(_ instance:lcb_t?, _ error: lcb_error_t) -> String {
+    if let instance = instance,
+        let errorMessage = lcb_strerror(instance,error),
+        let message = String(utf8String:errorMessage) {
+        return message
+    }
+    return "Failed with unknown error: \(error)"
+}
+

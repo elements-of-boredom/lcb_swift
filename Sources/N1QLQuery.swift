@@ -42,13 +42,14 @@ public class N1QLQuery {
         
         s["scan_consistency"] = scanConsistency.description()
         
-        if let json = try? JSONSerialization.data(withJSONObject: s, options:[]) {
-            if let content = String(data:json, encoding:.utf8) {
-                return content
+        return autoreleasepool {
+            if let json = try? JSONSerialization.data(withJSONObject: s, options:[]) {
+                if let content = String(data:json, encoding:.utf8) {
+                    return content
+                }
             }
+            return ""
         }
-
-        return ""
     }
     
     

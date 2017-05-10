@@ -11,12 +11,13 @@ import XCTest
 
 class bucketTests : XCTestCase {
     private var bucket:Bucket!
+    private var cluster: Cluster!
     
     override func setUp() {
         super.setUp()
 
-        let cluster = Cluster() //use the default localhost/default
         do {
+            cluster = try Cluster() //use the default localhost/default
             bucket = try cluster.openBucket(name:"default")
         }catch {
             XCTFail("Failed to initalize cluster, check to  make sure couchbase is running")
@@ -25,12 +26,12 @@ class bucketTests : XCTestCase {
     
     override func tearDown() {
         super.tearDown()
-        bucket!.disconnect()
+        bucket.disconnect()
     }
     
     func testBucketThrowsErrorWhenBadBucketNameIsProvided(){
         do {
-            var b = try Bucket(bucketName: "terrible_bad", connectionString: "couchbase://localhost/broken", password: nil)
+            _ = try cluster.openBucket(name: "badname")
             //We shouldn't reach this or we failed
             XCTFail()
         } catch {
@@ -40,7 +41,8 @@ class bucketTests : XCTestCase {
     
     func testBucketThrowsErrorWhenUrlIsBad(){
         do {
-            var b = try Bucket(bucketName: "default", connectionString: "couchbaasdse://localhost/default", password: nil)
+            let url = URL(string:"couchbasdase://localhost")!
+            _ = try Bucket(bucketName: "default", connection: url, password: nil)
             //We shouldn't reach this or we failed
             XCTFail()
         } catch {
@@ -135,6 +137,7 @@ class bucketTests : XCTestCase {
         ("nodeConnectionTimeout", testNodeConnectionTimeoutWorks),
         ("operationTimeout", testOperationTimeoutWorks),
         ("viewTimeout", testViewTimeoutWorks),
-        ("bucketConnectionFails",testBucketThrowsErrorWhenBadBucketNameIsProvided)
+        ("bucketConnectionFails",testBucketThrowsErrorWhenBadBucketNameIsProvided),
+        ("bucketConnectWithBadURLFails",testBucketThrowsErrorWhenUrlIsBad)
     ]
 }

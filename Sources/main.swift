@@ -30,6 +30,7 @@ guard let query = try? N1QLQuery(statement: "select name,age from default where 
 print(query.query())
 
 do {
+    for i in 1...5000 {
     try bucket.n1qlQuery(query: query) { result in
         switch result {
         case let .Success(meta,rows):
@@ -41,10 +42,12 @@ do {
         }
         dirty.signal()
     }
+    }
 } catch let error {
     print("Error: \(error)")
     dirty.signal()
 }
+    
 let _ = dirty.wait(timeout:DispatchTime.now() + .seconds(5))
 
 do{

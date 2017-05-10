@@ -18,9 +18,7 @@
 		37578C5E1EAE92F400E39B18 /* CreateOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F00A1EAA9238001C197F /* CreateOptions.swift */; };
 		37578C5F1EAE92F600E39B18 /* Authenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F00E1EAA939C001C197F /* Authenticator.swift */; };
 		37578C601EAE92F800E39B18 /* Bucket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0111EAA9415001C197F /* Bucket.swift */; };
-		37578C611EAE92FA00E39B18 /* Query.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0141EAA952C001C197F /* Query.swift */; };
 		37578C621EAE93C300E39B18 /* CouchbaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F01F1EAAA0B2001C197F /* CouchbaseError.swift */; };
-		37578C631EAE93C600E39B18 /* QueryResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0171EAA9D61001C197F /* QueryResponse.swift */; };
 		37578C641EAE93C800E39B18 /* N1QLQueryResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F01B1EAA9EAD001C197F /* N1QLQueryResult.swift */; };
 		3780F0091EAA8618001C197F /* Cluster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0081EAA8618001C197F /* Cluster.swift */; };
 		3780F00B1EAA9238001C197F /* CreateOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F00A1EAA9238001C197F /* CreateOptions.swift */; };
@@ -30,10 +28,6 @@
 		3780F0101EAA939C001C197F /* Authenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F00E1EAA939C001C197F /* Authenticator.swift */; };
 		3780F0121EAA9415001C197F /* Bucket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0111EAA9415001C197F /* Bucket.swift */; };
 		3780F0131EAA9415001C197F /* Bucket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0111EAA9415001C197F /* Bucket.swift */; };
-		3780F0151EAA952C001C197F /* Query.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0141EAA952C001C197F /* Query.swift */; };
-		3780F0161EAA952C001C197F /* Query.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0141EAA952C001C197F /* Query.swift */; };
-		3780F0181EAA9D61001C197F /* QueryResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0171EAA9D61001C197F /* QueryResponse.swift */; };
-		3780F0191EAA9D61001C197F /* QueryResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0171EAA9D61001C197F /* QueryResponse.swift */; };
 		3780F01C1EAA9EAD001C197F /* N1QLQueryResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F01B1EAA9EAD001C197F /* N1QLQueryResult.swift */; };
 		3780F01D1EAA9EAD001C197F /* N1QLQueryResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F01B1EAA9EAD001C197F /* N1QLQueryResult.swift */; };
 		3780F0201EAAA0B2001C197F /* CouchbaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F01F1EAAA0B2001C197F /* CouchbaseError.swift */; };
@@ -135,8 +129,6 @@
 		3780F00A1EAA9238001C197F /* CreateOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CreateOptions.swift; sourceTree = "<group>"; };
 		3780F00E1EAA939C001C197F /* Authenticator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Authenticator.swift; sourceTree = "<group>"; };
 		3780F0111EAA9415001C197F /* Bucket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Bucket.swift; sourceTree = "<group>"; };
-		3780F0141EAA952C001C197F /* Query.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Query.swift; sourceTree = "<group>"; };
-		3780F0171EAA9D61001C197F /* QueryResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QueryResponse.swift; sourceTree = "<group>"; };
 		3780F01B1EAA9EAD001C197F /* N1QLQueryResult.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = N1QLQueryResult.swift; sourceTree = "<group>"; };
 		3780F01F1EAAA0B2001C197F /* CouchbaseError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CouchbaseError.swift; sourceTree = "<group>"; };
 		378A607F1EAF942500651D86 /* Macros.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Macros.swift; sourceTree = "<group>"; };
@@ -200,15 +192,14 @@
 			path = lcb_command;
 			sourceTree = "<group>";
 		};
-		3780F01A1EAA9E8A001C197F /* Responses */ = {
+		3780F01A1EAA9E8A001C197F /* Results */ = {
 			isa = PBXGroup;
 			children = (
-				3780F0171EAA9D61001C197F /* QueryResponse.swift */,
 				3780F01B1EAA9EAD001C197F /* N1QLQueryResult.swift */,
 				378A60831EAFA25F00651D86 /* OperationResult.swift */,
 				37DB3C5B1EB105DF009996DA /* MultiCallbackResult.swift */,
 			);
-			name = Responses;
+			name = Results;
 			sourceTree = "<group>";
 		};
 		3780F01E1EAAA0A0001C197F /* Errors */ = {
@@ -223,6 +214,7 @@
 		3797465C1EC360AB00690622 /* Bucket */ = {
 			isa = PBXGroup;
 			children = (
+				37FFE86F1EB935E7002C0228 /* CallbackDelegate.swift */,
 				3780F0111EAA9415001C197F /* Bucket.swift */,
 				3797465D1EC360CD00690622 /* Bucket+Configuration.swift */,
 				379746611EC36CB300690622 /* BucketCallbacks.swift */,
@@ -261,6 +253,15 @@
 			name = View;
 			sourceTree = "<group>";
 		};
+		379746881EC3C15200690622 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				37C29E5F1EC0ED59009A849B /* String+utf8String.swift */,
+				37C29E6C1EC2486A009A849B /* URL+queryItems.swift */,
+			);
+			name = Extensions;
+			sourceTree = "<group>";
+		};
 		37C29E631EC212EA009A849B /* N1QL */ = {
 			isa = PBXGroup;
 			children = (
@@ -274,6 +275,7 @@
 		37DB3C4D1EAFED71009996DA /* Options */ = {
 			isa = PBXGroup;
 			children = (
+				3780F00A1EAA9238001C197F /* CreateOptions.swift */,
 				37DB3C4E1EAFEDDD009996DA /* Options.swift */,
 			);
 			name = Options;
@@ -331,21 +333,17 @@
 		OBJ_7 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				379746881EC3C15200690622 /* Extensions */,
 				379746691EC3721500690622 /* QueryTypes */,
 				3797465C1EC360AB00690622 /* Bucket */,
 				37DB3C561EB0F750009996DA /* Enums */,
 				37DB3C4D1EAFED71009996DA /* Options */,
 				3780F01E1EAAA0A0001C197F /* Errors */,
-				3780F01A1EAA9E8A001C197F /* Responses */,
+				3780F01A1EAA9E8A001C197F /* Results */,
 				OBJ_8 /* main.swift */,
 				3780F0081EAA8618001C197F /* Cluster.swift */,
-				3780F00A1EAA9238001C197F /* CreateOptions.swift */,
 				3780F00E1EAA939C001C197F /* Authenticator.swift */,
-				3780F0141EAA952C001C197F /* Query.swift */,
 				378A607F1EAF942500651D86 /* Macros.swift */,
-				37FFE86F1EB935E7002C0228 /* CallbackDelegate.swift */,
-				37C29E5F1EC0ED59009A849B /* String+utf8String.swift */,
-				37C29E6C1EC2486A009A849B /* URL+queryItems.swift */,
 			);
 			path = Sources;
 			sourceTree = SOURCE_ROOT;
@@ -469,9 +467,7 @@
 				37578C621EAE93C300E39B18 /* CouchbaseError.swift in Sources */,
 				37DB3C5E1EB105DF009996DA /* MultiCallbackResult.swift in Sources */,
 				37C29E621EC0ED59009A849B /* String+utf8String.swift in Sources */,
-				37578C611EAE92FA00E39B18 /* Query.swift in Sources */,
 				37DB3C511EAFEDDD009996DA /* Options.swift in Sources */,
-				37578C631EAE93C600E39B18 /* QueryResponse.swift in Sources */,
 				37C29E6B1EC2431F009A849B /* LCBSwiftError.swift in Sources */,
 				37578C5C1EAE92EF00E39B18 /* main.swift in Sources */,
 				378A60861EAFA25F00651D86 /* OperationResult.swift in Sources */,
@@ -497,7 +493,6 @@
 				372D363C1EB3CD1200C51EB4 /* StorageType.swift in Sources */,
 				379746791EC3740200690622 /* ViewSortOrder.swift in Sources */,
 				379746621EC36CB300690622 /* BucketCallbacks.swift in Sources */,
-				3780F0181EAA9D61001C197F /* QueryResponse.swift in Sources */,
 				37C29E6D1EC2486A009A849B /* URL+queryItems.swift in Sources */,
 				37C29E651EC2130B009A849B /* N1QLScanConsistency.swift in Sources */,
 				3797465E1EC360CD00690622 /* Bucket+Configuration.swift in Sources */,
@@ -517,7 +512,6 @@
 				379746751EC373CB00690622 /* ViewErrorMode.swift in Sources */,
 				378A60801EAF942500651D86 /* Macros.swift in Sources */,
 				3780F0121EAA9415001C197F /* Bucket.swift in Sources */,
-				3780F0151EAA952C001C197F /* Query.swift in Sources */,
 				37FFE8701EB935E7002C0228 /* CallbackDelegate.swift in Sources */,
 				OBJ_20 /* main.swift in Sources */,
 				37DB3C581EB0F75C009996DA /* DataFormat.swift in Sources */,
@@ -535,7 +529,6 @@
 				372D363D1EB3CD1200C51EB4 /* StorageType.swift in Sources */,
 				3797467A1EC3740200690622 /* ViewSortOrder.swift in Sources */,
 				379746631EC36CB300690622 /* BucketCallbacks.swift in Sources */,
-				3780F0191EAA9D61001C197F /* QueryResponse.swift in Sources */,
 				37C29E6E1EC2486A009A849B /* URL+queryItems.swift in Sources */,
 				37C29E661EC2130B009A849B /* N1QLScanConsistency.swift in Sources */,
 				3797465F1EC360CD00690622 /* Bucket+Configuration.swift in Sources */,
@@ -556,7 +549,6 @@
 				379746761EC373CB00690622 /* ViewErrorMode.swift in Sources */,
 				378A60811EAF942500651D86 /* Macros.swift in Sources */,
 				3780F0131EAA9415001C197F /* Bucket.swift in Sources */,
-				3780F0161EAA952C001C197F /* Query.swift in Sources */,
 				37FFE8711EB935E7002C0228 /* CallbackDelegate.swift in Sources */,
 				37DB3C591EB0F75C009996DA /* DataFormat.swift in Sources */,
 				37AC4C721EBBD8F60072351B /* bucketTests.swift in Sources */,

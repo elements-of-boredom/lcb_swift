@@ -62,6 +62,7 @@ class viewQueryTests : XCTestCase {
     }
     
     static var allTests = [
-        ("testQueryOptions", testViewQueryOptionsStringifyCorrectly)
+        ("testQueryOptions", testViewQueryOptionsStringifyCorrectly),
+        ("testNegativeQueryOptions",testViewQueryOptionsStringDoesntIncludeFalsyValues)
     ]
 }

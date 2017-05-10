@@ -8,7 +8,7 @@
 
 import Foundation
 extension Bucket {
-    public func query() {
+    public func query(query:ViewQuery, completion:@escaping OpCallback) {
         
     }
 }

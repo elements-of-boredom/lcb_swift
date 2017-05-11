@@ -53,6 +53,7 @@ public class Bucket {
         //lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_GET.rawValue), get_callback);
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_STORE.rawValue), BucketCallbacks.set_callback);
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_ENDURE.rawValue), BucketCallbacks.set_callback);
+        lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_TOUCH.rawValue), BucketCallbacks.set_callback);
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_REMOVE.rawValue), BucketCallbacks.remove_callback)
     }
 }
@@ -257,12 +258,20 @@ extension Bucket {
     ///   - completion: Callback which is called on operation completion
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func insert(key:String, value:Any, options:StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
-        
-        guard let jsonString = try Bucket.encodeValue(value: value) else {
-            throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
-        }
         var cmdOptions = CmdOptions()
-        cmdOptions.dataTypeFlags = .Json
+        
+        var jsonString:String
+        if value is String {
+            jsonString = value as! String
+            cmdOptions.dataTypeFlags = .String
+        }else{
+            guard let encodedString = try Bucket.encodeValue(value: value) else {
+                throw CouchbaseError.FailedSerialization("value provided is not in a proper format to be serialized")
+            }
+            jsonString = encodedString
+            cmdOptions.dataTypeFlags = .Json
+        }
+        
         cmdOptions.operation = .Insert
         cmdOptions.expiry = options.expiry
         cmdOptions.persistTo = options.persistTo
@@ -342,7 +351,7 @@ extension Bucket {
         }
         var cmdOptions = CmdOptions()
         cmdOptions.dataTypeFlags = .Json
-        cmdOptions.operation = .Upsert
+        cmdOptions.operation = .Replace
         cmdOptions.expiry = options.expiry
         cmdOptions.persistTo = options.persistTo
         cmdOptions.replicateTo = options.replicateTo
@@ -365,6 +374,8 @@ extension Bucket {
     public func touch(key:String, expiry:UInt32, completion: @escaping OpCallback) throws {
         var cmd = lcb_CMDTOUCH()
         cmd.exptime = expiry
+        
+        LCB_CMD_SET_KEY(&cmd,key,key.utf8.count)
         
         let delegate = CallbackDelegate()
         delegate.callback = completion

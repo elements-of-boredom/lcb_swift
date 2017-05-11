@@ -125,6 +125,7 @@ class bucketTests : XCTestCase {
         XCTAssertNotEqual(original, bucket.viewTimeout)
         bucket.viewTimeout = original
     }
+
     
     static var allTests = [
         ("configThrottle", testConfigThrottleWorks),

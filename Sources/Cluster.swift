@@ -105,8 +105,7 @@ public class Cluster {
     fileprivate func bucketConnection(name:String) -> URL{
         let url = connStr.deletingLastPathComponent()
                     .appendingPathComponent(name)
-        
-        print(url)
+
         return url
     }
     

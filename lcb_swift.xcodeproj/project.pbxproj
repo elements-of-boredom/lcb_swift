@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3725780B1EC4ADD30072E4B1 /* bucketIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3725780A1EC4ADD30072E4B1 /* bucketIntegrationTests.swift */; };
 		372CCF1F1EC0B5D00004101B /* N1QLQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 372CCF1E1EC0B5D00004101B /* N1QLQuery.swift */; };
 		372CCF201EC0B5D00004101B /* N1QLQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 372CCF1E1EC0B5D00004101B /* N1QLQuery.swift */; };
 		372CCF211EC0B5D00004101B /* N1QLQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 372CCF1E1EC0B5D00004101B /* N1QLQuery.swift */; };
@@ -94,7 +95,6 @@
 		37FFE8701EB935E7002C0228 /* CallbackDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37FFE86F1EB935E7002C0228 /* CallbackDelegate.swift */; };
 		37FFE8711EB935E7002C0228 /* CallbackDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37FFE86F1EB935E7002C0228 /* CallbackDelegate.swift */; };
 		37FFE8721EB935E7002C0228 /* CallbackDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37FFE86F1EB935E7002C0228 /* CallbackDelegate.swift */; };
-		OBJ_20 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_8 /* main.swift */; };
 		OBJ_29 /* lcb_swift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = OBJ_13 /* lcb_swift.framework */; };
 /* End PBXBuildFile section */
 
@@ -123,6 +123,7 @@
 /* Begin PBXFileReference section */
 		370713741EAA5A5F00DEEBD3 /* libcouchbase */ = {isa = PBXFileReference; lastKnownFileType = folder; path = libcouchbase; sourceTree = "<group>"; };
 		3723BBED1EAE928E00472C1D /* lcb_command */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lcb_command; sourceTree = BUILT_PRODUCTS_DIR; };
+		3725780A1EC4ADD30072E4B1 /* bucketIntegrationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = bucketIntegrationTests.swift; sourceTree = "<group>"; };
 		372CCF1E1EC0B5D00004101B /* N1QLQuery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = N1QLQuery.swift; sourceTree = "<group>"; };
 		372D363B1EB3CD1200C51EB4 /* StorageType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StorageType.swift; sourceTree = "<group>"; };
 		3780F0081EAA8618001C197F /* Cluster.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Cluster.swift; sourceTree = "<group>"; };
@@ -302,6 +303,7 @@
 			children = (
 				37AC4C711EBBD8F60072351B /* bucketTests.swift */,
 				379746841EC3A2C800690622 /* viewQueryTests.swift */,
+				3725780A1EC4ADD30072E4B1 /* bucketIntegrationTests.swift */,
 			);
 			name = lcb_swiftTests;
 			path = Tests/lcb_swiftTests;
@@ -513,7 +515,6 @@
 				378A60801EAF942500651D86 /* Macros.swift in Sources */,
 				3780F0121EAA9415001C197F /* Bucket.swift in Sources */,
 				37FFE8701EB935E7002C0228 /* CallbackDelegate.swift in Sources */,
-				OBJ_20 /* main.swift in Sources */,
 				37DB3C581EB0F75C009996DA /* DataFormat.swift in Sources */,
 				379FC9CF1EBA752E00674746 /* N1QLCallbackDelegate.swift in Sources */,
 			);
@@ -537,6 +538,7 @@
 				3797467E1EC374AA00690622 /* ViewIndexState.swift in Sources */,
 				3780F0101EAA939C001C197F /* Authenticator.swift in Sources */,
 				37DB3C5D1EB105DF009996DA /* MultiCallbackResult.swift in Sources */,
+				3725780B1EC4ADD30072E4B1 /* bucketIntegrationTests.swift in Sources */,
 				37C29E611EC0ED59009A849B /* String+utf8String.swift in Sources */,
 				3780F01D1EAA9EAD001C197F /* N1QLQueryResult.swift in Sources */,
 				37DB3C501EAFEDDD009996DA /* Options.swift in Sources */,
@@ -727,7 +729,10 @@
 				INFOPLIST_FILE = lcb_swift.xcodeproj/lcb_swiftTests_Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @loader_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = /usr/local/Cellar/libcouchbase/2.7.4/lib;
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-v",
+				);
 				OTHER_SWIFT_FLAGS = "$(inherited)";
 				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/libcouchbase";
 				TARGET_NAME = lcb_swiftTests;
@@ -749,7 +754,10 @@
 				INFOPLIST_FILE = lcb_swift.xcodeproj/lcb_swiftTests_Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @loader_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = /usr/local/Cellar/libcouchbase/2.7.4/lib;
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-v",
+				);
 				OTHER_SWIFT_FLAGS = "$(inherited)";
 				SWIFT_INCLUDE_PATHS = "$(SRCROOT)/libcouchbase";
 				TARGET_NAME = lcb_swiftTests;

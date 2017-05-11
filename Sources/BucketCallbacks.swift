@@ -36,7 +36,11 @@ internal class BucketCallbacks {
             var json = try JSONSerialization.jsonObject(with: bytes, options: [])
             completion(OperationResult.Success(value: json, cas: response.cas))
         } catch {
-            completion(OperationResult.Error("Serialization error: \(error.localizedDescription)"))
+            if response.cas != 0 {
+                completion(OperationResult.Success(value:value,cas:response.cas))
+                return
+            }
+            completion(OperationResult.Error("Error attempting to create the response document"))
         }
     }
     
@@ -67,7 +71,6 @@ internal class BucketCallbacks {
     // http://docs.couchbase.com/sdk-api/couchbase-c-client-2.7.3/group__lcb-kv-api.html#structlcb___r_e_s_p_b_a_s_e
     static let set_callback:lcb_RESPCALLBACK = {
         (instance, cbtype, rb) -> Void in
-        print("Is endure callback: \(LCB_CALLBACK_ENDURE.rawValue == UInt32(cbtype))")
         // If we have no callback, we don't need to do anything else
         guard let callback = rb?.pointee.cookie,
             let lcb = instance, // If we don't have an instance thats a problem
@@ -114,7 +117,11 @@ internal class BucketCallbacks {
                 //Error string parse
                 if let row = response.row {
                     let data = String(utf8String:row)!
-                    completion(N1QLQueryResult.Error(data))
+                    if let result = try? Bucket.decodeValue(value:data) {
+                        completion(N1QLQueryResult.QueryFailed(result))
+                        return
+                    }
+                    completion(N1QLQueryResult.Error("Unable to handle error from server:\n'\(data)'"))
                 }
             } else {
                 //Meta string parse

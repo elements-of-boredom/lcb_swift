@@ -8,6 +8,6 @@
 
 import Foundation
 public enum ViewSortOrder {
-    case Ascending
-    case Descending
+    case ascending
+    case descending
 }

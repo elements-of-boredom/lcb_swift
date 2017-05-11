@@ -13,11 +13,11 @@ import Foundation
 /// - FailedInit: returned when initialization fails
 /// - FailedConnect: connection did not succeed
 /// - FailedSerialization: serialization error
-public enum CouchbaseError : Error {
-    case FailedInit(String)
-    case FailedConnect(String)
-    case FailedOperationSchedule(String)
+public enum CouchbaseError: Error {
+    case failedInit(String)
+    case failedConnect(String)
+    case failedOperationSchedule(String)
     //Prolly shouldn't be here unless we make this a broader error enum ///TODO:
-    case FailedSerialization(String)
-    case FailedN1QlQuery(String)
+    case failedSerialization(String)
+    case failedN1QlQuery(String)
 }

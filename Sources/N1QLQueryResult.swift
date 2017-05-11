@@ -9,7 +9,7 @@
 import Foundation
 
 public enum N1QLQueryResult {
-    case Error(String)
-    case QueryFailed(Any?)
-    case Success(meta:Any?, rows:[Any])
+    case error(String)
+    case queryFailed(Any?)
+    case success(meta:Any?, rows:[Any])
 }

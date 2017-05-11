@@ -18,17 +18,17 @@ import Foundation
 /// - Statement: Highest consistency level, requres all mutations up to the point of the query request to be processed
 ///   before the query execution can start.
 public enum N1QLScanConsistency {
-    case None
-    case Request
-    case Statement
-    
+    case none
+    case request
+    case statement
+
     internal func description() -> String {
-        switch self{
-        case .None:
+        switch self {
+        case .none:
             return "not_bounded"
-        case .Request:
+        case .request:
             return "at_plus"
-        case .Statement:
+        case .statement:
             return "request_plus"
         }
     }

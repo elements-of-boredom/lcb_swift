@@ -8,6 +8,6 @@
 
 import Foundation
 public enum OperationResult {
-    case Error(String)
-    case Success(value:Any?, cas:UInt64)
+    case error(String)
+    case success(value:Any?, cas:UInt64)
 }

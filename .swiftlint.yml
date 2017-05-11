@@ -1,0 +1,40 @@
+disabled_rules:
+  - todo # many todo's should not be fixed immediately
+identifier_name:
+  min_length:
+    warning: 2
+  max_length:
+    warning: 60
+  excluded: # exclude id and url
+    - id
+    - URL
+line_length: 
+  warning: 250
+  error: 750
+file_length:
+  warning: 750
+  error: 1500
+function_body_length:
+  warning: 80
+  error: 120
+function_parameter_count:
+  warning: 7
+  error: 10
+type_name:
+  min_length:
+    warning: 2
+  max_length:
+    warning: 60
+type_body_length:
+  warning: 300
+  error: 750
+large_tuple:
+  warning: 4
+  error: 5
+nesting:
+  type_level: 2
+  statement_level: 5
+force_cast: warning
+force_try: warning
+shorthand_operator: warning
+reporter: "xcode"

@@ -8,6 +8,6 @@
 
 import Foundation
 public enum MultiCallbackResult {
-    case Error(String)
-    case Success(UInt,[String:OperationResult])
+    case error(String)
+    case success(UInt, [String:OperationResult])
 }

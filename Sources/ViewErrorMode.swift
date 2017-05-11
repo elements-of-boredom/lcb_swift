@@ -8,6 +8,6 @@
 
 import Foundation
 public enum ViewErrorMode {
-    case Continue
-    case Stop
+    case continuous
+    case stop
 }

@@ -13,5 +13,3 @@ guard let cluster = try? Cluster(connectionString:connstr) else {
 RunLoop.main.run(until: Date(timeIntervalSinceNow: 45))
 
 print("\n--Exit Program")
-
-

@@ -8,9 +8,9 @@
 
 import Foundation
 public struct CreateOptions {
-    let certpath : String?
-    
-    init(){
+    let certpath: String?
+
+    init() {
         certpath = nil
     }
 }

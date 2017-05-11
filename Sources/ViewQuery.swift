@@ -8,88 +8,87 @@
 
 import Foundation
 public class ViewQuery {
-    
-    private let designDocument:String
-    private let viewName:String
-    private let viewPath:String
-    
-    private var options = [String:Any]()
-    
-    private var _skip:Int32 = 0
-    private var _limit:Int32 = 0
-    private var _order:ViewSortOrder = .Ascending
-    private var _indexState: ViewIndexState = .AllowStale
+
+    private let designDocument: String
+    private let viewName: String
+    private let viewPath: String
+
+    private var options = [String: Any]()
+
+    private var _skip: Int32 = 0
+    private var _limit: Int32 = 0
+    private var _order: ViewSortOrder = .ascending
+    private var _indexState: ViewIndexState = .allowStale
     private var _reduce: Bool = false
-    private var _group:Int32 = -1
-    private var _keys:[String]?
-    private var _key:String?
-    private var _startKey:String?
-    private var _endKey:String?
-    private var _keyRangeIsInclusiveEnd:Bool = false
-    private var _startKeyDocId:String?
-    private var _endKeyDocId:String?
-    private var _include:Bool = true
-    private var _fullSet:Bool = true
-    
-    
-    internal init(designDocument:String, viewName:String) {
+    private var _group: Int32 = -1
+    private var _keys: [String]?
+    private var _key: String?
+    private var _startKey: String?
+    private var _endKey: String?
+    private var _keyRangeIsInclusiveEnd: Bool = false
+    private var _startKeyDocId: String?
+    private var _endKeyDocId: String?
+    private var _include: Bool = true
+    private var _fullSet: Bool = true
+
+    internal init(designDocument: String, viewName: String) {
         //May not need this?
         let path = "_design/\(designDocument)/_view/\(viewName)"
         self.viewPath = path
         self.designDocument = designDocument
         self.viewName = viewName
     }
-    
-    public static func from(designDocument:String, viewName:String) -> ViewQuery {
+
+    public static func from(designDocument: String, viewName: String) -> ViewQuery {
         return ViewQuery(designDocument: designDocument, viewName: viewName)
     }
-    
-    public func skip(_ amount:Int32) -> ViewQuery {
+
+    public func skip(_ amount: Int32) -> ViewQuery {
         self.options["skip"] = amount
         return self
     }
-    
-    public func limit(_ limit:Int32) -> ViewQuery {
+
+    public func limit(_ limit: Int32) -> ViewQuery {
         self.options["limit"] = limit
         return self
     }
-    
-    public func order(_ order:ViewSortOrder) -> ViewQuery {
-        self.options["descending"] = order == .Descending
+
+    public func order(_ order: ViewSortOrder) -> ViewQuery {
+        self.options["descending"] = order == .descending
         return self
     }
-    
-    public func stale(_ stale:ViewIndexState) -> ViewQuery {
+
+    public func stale(_ stale: ViewIndexState) -> ViewQuery {
         self.options["stale"] = stale.description()
         return self
     }
-    
-    public func reduce(_ reduce:Bool) -> ViewQuery {
+
+    public func reduce(_ reduce: Bool) -> ViewQuery {
         self.options["reduce"] = reduce
         return self
     }
-    
-    public func group(_ group : Bool) -> ViewQuery {
+
+    public func group(_ group: Bool) -> ViewQuery {
         self.options["group"] = group
         return self
     }
-    
-    public func groupLevel(_ group_level:Int32) -> ViewQuery {
-        self.options["group_level"] = group_level
+
+    public func groupLevel(_ groupLevel: Int32) -> ViewQuery {
+        self.options["group_level"] = groupLevel
         return self
     }
-    
-    public func key(_ key:String) -> ViewQuery {
+
+    public func key(_ key: String) -> ViewQuery {
         self.options["key"] = key
         return self
     }
-    
-    public func keys(_ keys:[String]) -> ViewQuery {
+
+    public func keys(_ keys: [String]) -> ViewQuery {
         self.options["keys"] = JSONStringify(value: keys)
         return self
     }
-    
-    public func range(start:[String]? = nil, end:[String]? = nil, inclusiveEnd:Bool?) -> ViewQuery {
+
+    public func range(start: [String]? = nil, end: [String]? = nil, inclusiveEnd: Bool?) -> ViewQuery {
         if let start = start {
             self.options["startkey"] = JSONStringify(value: start)
         }
@@ -101,8 +100,8 @@ public class ViewQuery {
         }
         return self
     }
-    
-    public func idRange(start:String? = nil, end:String? = nil) -> ViewQuery {
+
+    public func idRange(start: String? = nil, end: String? = nil) -> ViewQuery {
         if let start = start {
             self.options["startkey_docid"] = start
         }
@@ -111,58 +110,55 @@ public class ViewQuery {
         }
         return self
     }
-    
-    public func includeDocs(_ include:Bool) -> ViewQuery {
+
+    public func includeDocs(_ include: Bool) -> ViewQuery {
         if !include {
             self.options.removeValue(forKey: "include_docs")
-        }else{
+        } else {
             self.options["include_docs"] = true
         }
         return self
     }
-    
-    public func fullSet(_ fullSet:Bool) -> ViewQuery {
+
+    public func fullSet(_ fullSet: Bool) -> ViewQuery {
         if !fullSet {
             self.options.removeValue(forKey: "full_set")
-        }else {
+        } else {
             self.options["full_set"] = true
         }
         return self
     }
-    
-    
+
     public func options(_ options: [String:Any]) -> ViewQuery {
-        for (key,value) in options {
+        for (key, value) in options {
             self.options[key] = value
         }
         return self
     }
-    
-    
+
     /// Builds a url querystring from the options
     ///
     /// - Returns: url query string
     internal func optionString() -> String {
-        
+
         var comp = URLComponents(string: "?")!
-        for (key,value) in options {
+        for (key, value) in options {
             comp.queryItems?.append(URLQueryItem(name: key, value: String(describing:value)))
         }
-        
+
         if let query = comp.query {
             return query
         }
         return ""
     }
-    
-    
+
     /// Mirrors JSON.stringify in javascript
     ///
     /// - Parameters:
     ///   - value: values to "stringify"
     ///   - prettyPrinted: return the string with "pretty" spacing
     /// - Returns: stringified object.
-    private func JSONStringify(value:Any, prettyPrinted:Bool = false) -> String {
+    private func JSONStringify(value:Any, prettyPrinted: Bool = false) -> String {
         let options = prettyPrinted ? JSONSerialization.WritingOptions.prettyPrinted : []
         guard JSONSerialization.isValidJSONObject(value: value) else {
             return ""

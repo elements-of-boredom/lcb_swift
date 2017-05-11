@@ -8,9 +8,8 @@
 
 import Foundation
 
-
-public typealias OpCallback = (OperationResult)->()
-public typealias MultiCallback = (MultiCallbackResult)->()
+public typealias OpCallback = (OperationResult) -> Void
+public typealias MultiCallback = (MultiCallbackResult) -> Void
 
 /// Swift does not allow dynamic dispatch which means any function pointers
 /// that we would pass into the C library can't be called in Swift later.
@@ -19,17 +18,16 @@ public typealias MultiCallback = (MultiCallbackResult)->()
 /// to the unmanaged retained instance of this callback through as the cookie
 /// and be able to call it in Swift inside the response callbacks from libcouchbase
 internal class CallbackDelegate {
-    var callback : OpCallback?
-    
-    var persistTo : Int16
-    var replicateTo: Int16
-    var isDelete : Bool
+    var callback: OpCallback?
 
-    
-    public init(isDelete:Bool = false, persistTo:Int16 = 0, replicateTo: Int16 = 0){
+    var persistTo: Int16
+    var replicateTo: Int16
+    var isDelete: Bool
+
+    public init(isDelete: Bool = false, persistTo: Int16 = 0, replicateTo: Int16 = 0) {
         self.isDelete = isDelete
         self.persistTo = persistTo
         self.replicateTo = replicateTo
-        
+
     }
 }

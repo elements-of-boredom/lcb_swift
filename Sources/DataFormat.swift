@@ -7,10 +7,10 @@
 //
 
 import Foundation
-public enum DataFormat : UInt32 {
-    case Reserved = 0x00000000
-    case Private = 0x01000000
-    case Json = 0x02000000
-    case Binary = 0x03000000
-    case String = 0x04000000
+public enum DataFormat: UInt32 {
+    case reserved = 0x00000000
+    case lcbPrivate = 0x01000000
+    case json = 0x02000000
+    case binary = 0x03000000
+    case string = 0x04000000
 }

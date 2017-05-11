@@ -9,17 +9,16 @@
 import XCTest
 @testable import lcb_swift
 
-
-class viewQueryTests : XCTestCase {
+class ViewQueryTests: XCTestCase {
     override func setUp() {
         super.setUp()
-        
+
     }
-    
+
     override func tearDown() {
         super.tearDown()
     }
-    
+
     func testViewQueryOptionsStringifyCorrectly() {
         let vq = ViewQuery(designDocument: "ddoc", viewName: "viewName")
         let query = vq.key("mykey")
@@ -28,10 +27,10 @@ class viewQueryTests : XCTestCase {
             .fullSet(true)
             .group(true)
             .groupLevel(1)
-            .keys(["1","2","3"])
-            .order(.Ascending)
+            .keys(["1", "2", "3"])
+            .order(.ascending)
             .skip(15)
-        
+
         let queryString = query.optionString()
         XCTAssertTrue(queryString.contains("limit=10"))
         XCTAssertTrue(queryString.contains("descending=false"))
@@ -43,26 +42,25 @@ class viewQueryTests : XCTestCase {
         XCTAssertTrue(queryString.contains("include_docs=true"))
         XCTAssertTrue(queryString.contains("group=true"))
     }
-    
+
     func testViewQueryOptionsStringDoesntIncludeFalsyValues() {
         let vq = ViewQuery(designDocument: "ddoc", viewName: "viewName")
         let query = vq.key("mykey")
             .includeDocs(false)
-            .order(.Descending)
+            .order(.descending)
             .fullSet(false)
-        
+
         let queryString = query.optionString()
-        
+
         XCTAssertFalse(queryString.contains("full_set=true") || queryString.contains("full_set=false"))
         XCTAssertFalse(queryString.contains("include_docs=true") || queryString.contains("include_docs=false"))
         XCTAssertTrue(queryString.contains("descending=true"))
         XCTAssertTrue(queryString.contains("key=mykey"))
-        
-        
+
     }
-    
+
     static var allTests = [
         ("testQueryOptions", testViewQueryOptionsStringifyCorrectly),
-        ("testNegativeQueryOptions",testViewQueryOptionsStringDoesntIncludeFalsyValues)
+        ("testNegativeQueryOptions", testViewQueryOptionsStringDoesntIncludeFalsyValues)
     ]
 }

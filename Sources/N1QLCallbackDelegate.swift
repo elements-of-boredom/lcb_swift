@@ -8,7 +8,7 @@
 
 import Foundation
 
-public typealias N1QLCallback = (N1QLQueryResult)->()
+public typealias N1QLCallback = (N1QLQueryResult) -> Void
 
 /// Swift does not allow dynamic dispatch which means any function pointers
 /// that we would pass into the C library can't be called in Swift later.
@@ -19,5 +19,5 @@ public typealias N1QLCallback = (N1QLQueryResult)->()
 public class N1QLCallbackDelegate {
 
     internal var rows = [Any]()
-    internal var callback:N1QLCallback?
+    internal var callback: N1QLCallback?
 }

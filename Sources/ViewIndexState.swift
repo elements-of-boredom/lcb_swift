@@ -8,17 +8,17 @@
 
 import Foundation
 public enum ViewIndexState {
-    case AllowStale
-    case UpdateAfter
-    case UpdateBefore
-    
+    case allowStale
+    case updateAfter
+    case updateBefore
+
     internal func description() -> String {
         switch self {
-        case .AllowStale:
+        case .allowStale:
             return "ok"
-        case .UpdateAfter:
+        case .updateAfter:
             return "update_after"
-        case .UpdateBefore:
+        case .updateBefore:
             return "false"
         }
     }

@@ -10,23 +10,23 @@ import Foundation
 import libcouchbase
 
 public enum StorageOperation {
-    case Upsert // LCB_SET
-    case Insert // LCB_ADD
-    case Append // LCB_APPEND
-    case Prepend // LCB_PREPEND
-    case Replace //LCB_REPLACE
-    
+    case upsert // LCB_SET
+    case insert // LCB_ADD
+    case append // LCB_APPEND
+    case prepend // LCB_PREPEND
+    case replace //LCB_REPLACE
+
     internal func toLcbType() -> lcb_storage_t {
         switch self {
-        case .Upsert:
+        case .upsert:
             return LCB_SET
-        case .Insert:
+        case .insert:
             return LCB_ADD
-        case .Append:
+        case .append:
             return LCB_APPEND
-        case .Prepend:
+        case .prepend:
             return LCB_PREPEND
-        case .Replace:
+        case .replace:
             return LCB_REPLACE
         }
     }

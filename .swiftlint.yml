@@ -1,5 +1,6 @@
 disabled_rules:
   - todo # many todo's should not be fixed immediately
+  - trailing_whitespace # unimportant
 identifier_name:
   min_length:
     warning: 2
@@ -38,3 +39,5 @@ force_cast: warning
 force_try: warning
 shorthand_operator: warning
 reporter: "xcode"
+excluded:
+  - Tests

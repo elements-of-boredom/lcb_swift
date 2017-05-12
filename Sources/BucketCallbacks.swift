@@ -87,15 +87,24 @@ internal class BucketCallbacks {
             completion(OperationResult.error("Success with No response found"))
             return
         }
-
-        //No durability constraints means we can move on.
-        if delegate.persistTo == 0 && delegate.replicateTo == 0 {
-            completion(OperationResult.success(value:nil, cas: response.cas))
-        } else {
+        
+        //If we have an endurance requirement, Endure
+        if delegate.persistTo > 0 || delegate.replicateTo > 0 {
             Bucket.endure(instance:lcb, response:response, delegate:delegate)
+            return
         }
-    }
+        
+        //Counter's need to return the new value.
+        if UInt32(cbtype) == LCB_CALLBACK_COUNTER.rawValue {
+            rb?.withMemoryRebound(to:lcb_RESPCOUNTER.self, capacity:1) { ptr in
+                completion(OperationResult.success(value: ptr.pointee.value, cas: response.cas))
+            }
+            return
+        }
+        completion(OperationResult.success(value:nil, cas: response.cas))
 
+    }
+    
     static let n1qlRowCallback: lcb_N1QLCALLBACK = {
         (instance, cbtype, resp) -> Void in
 

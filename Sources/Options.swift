@@ -33,5 +33,11 @@ internal struct CmdOptions {
     public var cmdflags: UInt32 = 0
     public var persistTo: Int16 = 0
     public var replicateTo: Int16 = 0
-
+    
+    public init(opts: StoreOptions) {
+        self.cas = opts.cas
+        self.expiry = opts.expiry
+        self.persistTo = opts.persistTo
+        self.replicateTo = opts.replicateTo
+    }
 }

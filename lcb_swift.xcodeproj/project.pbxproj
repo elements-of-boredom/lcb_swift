@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3725780B1EC4ADD30072E4B1 /* bucketIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3725780A1EC4ADD30072E4B1 /* bucketIntegrationTests.swift */; };
+		3725780B1EC4ADD30072E4B1 /* BucketIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3725780A1EC4ADD30072E4B1 /* BucketIntegrationTests.swift */; };
 		372CCF1F1EC0B5D00004101B /* N1QLQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 372CCF1E1EC0B5D00004101B /* N1QLQuery.swift */; };
 		372CCF201EC0B5D00004101B /* N1QLQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 372CCF1E1EC0B5D00004101B /* N1QLQuery.swift */; };
 		372CCF211EC0B5D00004101B /* N1QLQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 372CCF1E1EC0B5D00004101B /* N1QLQuery.swift */; };
@@ -66,11 +66,11 @@
 		379746811EC39D5F00690622 /* Bucket+ViewQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 379746801EC39D5F00690622 /* Bucket+ViewQuery.swift */; };
 		379746821EC39D5F00690622 /* Bucket+ViewQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 379746801EC39D5F00690622 /* Bucket+ViewQuery.swift */; };
 		379746831EC39D5F00690622 /* Bucket+ViewQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 379746801EC39D5F00690622 /* Bucket+ViewQuery.swift */; };
-		379746861EC3A2C800690622 /* viewQueryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 379746841EC3A2C800690622 /* viewQueryTests.swift */; };
+		379746861EC3A2C800690622 /* ViewQueryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 379746841EC3A2C800690622 /* ViewQueryTests.swift */; };
 		379FC9CF1EBA752E00674746 /* N1QLCallbackDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 379FC9CE1EBA752E00674746 /* N1QLCallbackDelegate.swift */; };
 		379FC9D01EBA752E00674746 /* N1QLCallbackDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 379FC9CE1EBA752E00674746 /* N1QLCallbackDelegate.swift */; };
 		379FC9D11EBA752E00674746 /* N1QLCallbackDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 379FC9CE1EBA752E00674746 /* N1QLCallbackDelegate.swift */; };
-		37AC4C721EBBD8F60072351B /* bucketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AC4C711EBBD8F60072351B /* bucketTests.swift */; };
+		37AC4C721EBBD8F60072351B /* BucketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AC4C711EBBD8F60072351B /* BucketTests.swift */; };
 		37C29E601EC0ED59009A849B /* String+utf8String.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C29E5F1EC0ED59009A849B /* String+utf8String.swift */; };
 		37C29E611EC0ED59009A849B /* String+utf8String.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C29E5F1EC0ED59009A849B /* String+utf8String.swift */; };
 		37C29E621EC0ED59009A849B /* String+utf8String.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C29E5F1EC0ED59009A849B /* String+utf8String.swift */; };
@@ -123,7 +123,7 @@
 /* Begin PBXFileReference section */
 		370713741EAA5A5F00DEEBD3 /* libcouchbase */ = {isa = PBXFileReference; lastKnownFileType = folder; path = libcouchbase; sourceTree = "<group>"; };
 		3723BBED1EAE928E00472C1D /* lcb_command */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lcb_command; sourceTree = BUILT_PRODUCTS_DIR; };
-		3725780A1EC4ADD30072E4B1 /* bucketIntegrationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = bucketIntegrationTests.swift; sourceTree = "<group>"; };
+		3725780A1EC4ADD30072E4B1 /* BucketIntegrationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BucketIntegrationTests.swift; sourceTree = "<group>"; };
 		372CCF1E1EC0B5D00004101B /* N1QLQuery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = N1QLQuery.swift; sourceTree = "<group>"; };
 		372D363B1EB3CD1200C51EB4 /* StorageType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StorageType.swift; sourceTree = "<group>"; };
 		3780F0081EAA8618001C197F /* Cluster.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Cluster.swift; sourceTree = "<group>"; };
@@ -143,9 +143,9 @@
 		379746781EC3740200690622 /* ViewSortOrder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewSortOrder.swift; sourceTree = "<group>"; };
 		3797467C1EC374AA00690622 /* ViewIndexState.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewIndexState.swift; sourceTree = "<group>"; };
 		379746801EC39D5F00690622 /* Bucket+ViewQuery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Bucket+ViewQuery.swift"; sourceTree = "<group>"; };
-		379746841EC3A2C800690622 /* viewQueryTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = viewQueryTests.swift; sourceTree = "<group>"; };
+		379746841EC3A2C800690622 /* ViewQueryTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewQueryTests.swift; sourceTree = "<group>"; };
 		379FC9CE1EBA752E00674746 /* N1QLCallbackDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = N1QLCallbackDelegate.swift; sourceTree = "<group>"; };
-		37AC4C711EBBD8F60072351B /* bucketTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = bucketTests.swift; sourceTree = "<group>"; };
+		37AC4C711EBBD8F60072351B /* BucketTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BucketTests.swift; sourceTree = "<group>"; };
 		37C29E5F1EC0ED59009A849B /* String+utf8String.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+utf8String.swift"; sourceTree = "<group>"; };
 		37C29E641EC2130B009A849B /* N1QLScanConsistency.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = N1QLScanConsistency.swift; sourceTree = "<group>"; };
 		37C29E681EC2431F009A849B /* LCBSwiftError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LCBSwiftError.swift; sourceTree = "<group>"; };
@@ -301,9 +301,9 @@
 		OBJ_10 /* lcb_swiftTests */ = {
 			isa = PBXGroup;
 			children = (
-				37AC4C711EBBD8F60072351B /* bucketTests.swift */,
-				379746841EC3A2C800690622 /* viewQueryTests.swift */,
-				3725780A1EC4ADD30072E4B1 /* bucketIntegrationTests.swift */,
+				37AC4C711EBBD8F60072351B /* BucketTests.swift */,
+				379746841EC3A2C800690622 /* ViewQueryTests.swift */,
+				3725780A1EC4ADD30072E4B1 /* BucketIntegrationTests.swift */,
 			);
 			name = lcb_swiftTests;
 			path = Tests/lcb_swiftTests;
@@ -569,12 +569,12 @@
 				3797467E1EC374AA00690622 /* ViewIndexState.swift in Sources */,
 				3780F0101EAA939C001C197F /* Authenticator.swift in Sources */,
 				37DB3C5D1EB105DF009996DA /* MultiCallbackResult.swift in Sources */,
-				3725780B1EC4ADD30072E4B1 /* bucketIntegrationTests.swift in Sources */,
+				3725780B1EC4ADD30072E4B1 /* BucketIntegrationTests.swift in Sources */,
 				37C29E611EC0ED59009A849B /* String+utf8String.swift in Sources */,
 				3780F01D1EAA9EAD001C197F /* N1QLQueryResult.swift in Sources */,
 				37DB3C501EAFEDDD009996DA /* Options.swift in Sources */,
 				3780F0211EAAA0B2001C197F /* CouchbaseError.swift in Sources */,
-				379746861EC3A2C800690622 /* viewQueryTests.swift in Sources */,
+				379746861EC3A2C800690622 /* ViewQueryTests.swift in Sources */,
 				37C29E6A1EC2431F009A849B /* LCBSwiftError.swift in Sources */,
 				3780F00D1EAA923E001C197F /* CreateOptions.swift in Sources */,
 				378A60851EAFA25F00651D86 /* OperationResult.swift in Sources */,
@@ -584,7 +584,7 @@
 				3780F0131EAA9415001C197F /* Bucket.swift in Sources */,
 				37FFE8711EB935E7002C0228 /* CallbackDelegate.swift in Sources */,
 				37DB3C591EB0F75C009996DA /* DataFormat.swift in Sources */,
-				37AC4C721EBBD8F60072351B /* bucketTests.swift in Sources */,
+				37AC4C721EBBD8F60072351B /* BucketTests.swift in Sources */,
 				379FC9D01EBA752E00674746 /* N1QLCallbackDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

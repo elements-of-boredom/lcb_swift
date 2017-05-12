@@ -53,6 +53,7 @@ public class Bucket {
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_STORE.rawValue), BucketCallbacks.setCallback)
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_ENDURE.rawValue), BucketCallbacks.setCallback)
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_TOUCH.rawValue), BucketCallbacks.setCallback)
+        lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_COUNTER.rawValue), BucketCallbacks.setCallback)
         lcb_install_callback3(self.instance, Int32(LCB_CALLBACK_REMOVE.rawValue), BucketCallbacks.removeCallback)
     }
 }
@@ -71,12 +72,9 @@ extension Bucket {
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func append(key: String, value: String, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
-        var cmdOptions = CmdOptions()
+        var cmdOptions = CmdOptions(opts:options)
         cmdOptions.dataTypeFlags = .reserved
         cmdOptions.operation = .append
-        cmdOptions.expiry = options.expiry
-        cmdOptions.persistTo = options.persistTo
-        cmdOptions.replicateTo = options.persistTo
 
         var cmd  = createStoreCMD(cmdOptions, key: key)
         LCB_CMD_SET_VALUE(&cmd, value, value.utf8.count)
@@ -119,7 +117,7 @@ extension Bucket {
             let message = lcb_errortext(instance, err)
             throw CouchbaseError.failedOperationSchedule("Couldn't schedule operation! \(message)")
         }
-        lcb_wait(instance); // get_callback is invoked here
+        lcb_wait(instance); // setCallback is invoked here
     }
 
     /// Destroys and releases all allocated resources owned by the bucket.
@@ -249,8 +247,9 @@ extension Bucket {
     ///   - completion: Callback which is called on operation completion
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func insert(key: String, value:Any, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
-        var cmdOptions = CmdOptions()
-
+        var cmdOptions = CmdOptions(opts:options)
+        cmdOptions.operation = .insert
+        
         var jsonString: String
         if let stringValue = (value as? String) {
             jsonString = stringValue
@@ -262,11 +261,6 @@ extension Bucket {
             jsonString = encodedString
             cmdOptions.dataTypeFlags = .json
         }
-
-        cmdOptions.operation = .insert
-        cmdOptions.expiry = options.expiry
-        cmdOptions.persistTo = options.persistTo
-        cmdOptions.replicateTo = options.replicateTo
 
         var cmd  = createStoreCMD(cmdOptions, key: key)
         LCB_CMD_SET_VALUE(&cmd, jsonString, jsonString.utf8.count)
@@ -284,13 +278,10 @@ extension Bucket {
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func prepend(key: String, value: String, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
-        var cmdOptions = CmdOptions()
+        var cmdOptions = CmdOptions(opts:options)
         cmdOptions.dataTypeFlags = .reserved
         cmdOptions.operation = .prepend
-        cmdOptions.expiry = options.expiry
-        cmdOptions.persistTo = options.persistTo
-        cmdOptions.replicateTo = options.persistTo
-
+        
         var cmd  = createStoreCMD(cmdOptions, key: key)
         LCB_CMD_SET_VALUE(&cmd, value, value.utf8.count)
 
@@ -337,13 +328,10 @@ extension Bucket {
         guard let jsonString = try Bucket.encodeValue(value: value) else {
             throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
         }
-        var cmdOptions = CmdOptions()
+        var cmdOptions = CmdOptions(opts:options)
         cmdOptions.dataTypeFlags = .json
         cmdOptions.operation = .replace
-        cmdOptions.expiry = options.expiry
-        cmdOptions.persistTo = options.persistTo
-        cmdOptions.replicateTo = options.replicateTo
-
+        
         var cmd  = createStoreCMD(cmdOptions, key: key)
         LCB_CMD_SET_VALUE(&cmd, jsonString, jsonString.utf8.count)
 
@@ -420,13 +408,10 @@ extension Bucket {
         guard let jsonString = try Bucket.encodeValue(value: value) else {
             throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
         }
-        var cmdOptions = CmdOptions()
+        var cmdOptions = CmdOptions(opts:options)
         cmdOptions.dataTypeFlags = .json
         cmdOptions.operation = .upsert
-        cmdOptions.expiry = options.expiry
-        cmdOptions.persistTo = options.persistTo
-        cmdOptions.replicateTo = options.replicateTo
-
+        
         var cmd  = createStoreCMD(cmdOptions, key: key)
         LCB_CMD_SET_VALUE(&cmd, jsonString, jsonString.utf8.count)
 
@@ -466,8 +451,9 @@ extension Bucket {
         getCMD.cmdflags = lcb_U32(options.cmdflags)
         if options.lock {
             getCMD.lock = 1
-            getCMD.exptime = lcb_U32(options.expiry)
+            //getCMD.exptime = lcb_U32(options.expiry)
         }
+        getCMD.exptime = options.expiry
         getCMD.cas = options.cas
         LCB_CMD_SET_KEY(&getCMD, key, key.utf8.count)
 

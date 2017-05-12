@@ -318,7 +318,112 @@ class BucketIntegrationTests: XCTestCase {
         expect()
     }
 
-/// - MARK: HELPERS
+    func testCounterWorks() {
+        let docId = "counterDoc"
+        deleteRecord(key:docId)
+        let counterE = expectation(description:"counter")
+        try? bucket.counter(key:docId, delta:1, initial:33) { result in
+            switch result {
+            case let .success(value, cas):
+                if let counter = (value as? UInt64) {
+                    XCTAssert(counter == 33)
+                    XCTAssert(cas != 0)
+                    counterE.fulfill()
+                } else {
+                    XCTFail("Invalid values from server response")
+                }
+            case let .error(msg):
+                XCTFail(msg)
+            }
+        }
+        expect()
+        
+        deleteRecord(key:docId)
+
+    }
+    
+    func testGetAndLockWorks() {
+        var ocas = createRecord()
+        let lockE = expectation(description:"getandlock")
+        try? bucket.getAndLock(key: docKey, lockTime:25) { result in
+            switch result {
+            case let .success(_, cas):
+                XCTAssert(ocas != cas) //cas should change if we lock.
+                print("cas is:\(cas)")
+                ocas = cas
+                lockE.fulfill()
+            case let .error(msg):
+                XCTFail(msg)
+            }
+        }
+        expect()
+        //Now try and update it without specifying a cas
+        let updateE = expectation(description: "update")
+        let ddata = ["name": "gregish", "age": arc4random()] as [String : Any]
+        try? bucket.upsert(key: docKey, value: ddata) { result in
+            switch result {
+            case .success(_):
+                XCTFail("Shouldn't be able to modify the document without a CAS")
+            case let .error(msg):
+                print("upsert failed with:\(msg)")
+                updateE.fulfill()
+            }
+        }
+        expect()
+        
+        //Now update with cas
+        let update2E = expectation(description: "update2")
+        let opts = StoreOptions(persistTo: 0, replicateTo: 0, expiry: 0, cas: ocas)
+        try? bucket.upsert(key: docKey, value: ddata, options: opts) { result in
+            switch result {
+            case let .success(_, cas):
+                XCTAssert(ocas != cas)
+                update2E.fulfill()
+            case let .error(msg):
+                XCTFail(msg)
+            }
+        }
+        expect()
+        deleteRecord()
+    }
+    
+    func testGetAndTouchWorks() {
+        _ = createRecord()
+        let touchE = expectation(description:"touchE")
+        //get it and set it to expire immediately
+        try? bucket.getAndTouch(key: docKey, expiry: 1) { result in
+            switch result {
+            case .success(_):
+                touchE.fulfill()
+            case let .error(msg):
+                XCTFail(msg)
+            }
+        }
+        expect()
+        
+        //Give it some time to expire the document
+        var expired = false
+        for _ in 1...10 {
+            if expired {
+                break
+            }
+            let touchE = expectation(description:"touchE")
+            try? bucket.get(key: docKey) { result in
+                switch result {
+                case .success(_):
+                    touchE.fulfill()
+                case .error(_):
+                    expired = true
+                    touchE.fulfill()
+                }
+            }
+            expect()
+            sleep(1)
+        }
+        XCTAssertTrue(expired)
+    }
+
+// - MARK: HELPERS
     func createRecord(key: String? = nil, data: [String:Any]? = nil) -> UInt64 {
         let ddata = data ?? ["name": "greg", "age": arc4random()] as [String : Any]
         let dKey = key ?? docKey
@@ -357,7 +462,7 @@ class BucketIntegrationTests: XCTestCase {
     }
 
     func expect() {
-        waitForExpectations(timeout: 10) { error in
+        waitForExpectations(timeout: 3) { error in
             if let error = error {
                 XCTFail(error.localizedDescription)
             }

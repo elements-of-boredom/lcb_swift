@@ -9,27 +9,11 @@
 import Foundation
 public class ViewQuery {
 
-    private let designDocument: String
-    private let viewName: String
+    let designDocument: String
+    let viewName: String
     private let viewPath: String
 
     private var options = [String: Any]()
-
-    private var _skip: Int32 = 0
-    private var _limit: Int32 = 0
-    private var _order: ViewSortOrder = .ascending
-    private var _indexState: ViewIndexState = .allowStale
-    private var _reduce: Bool = false
-    private var _group: Int32 = -1
-    private var _keys: [String]?
-    private var _key: String?
-    private var _startKey: String?
-    private var _endKey: String?
-    private var _keyRangeIsInclusiveEnd: Bool = false
-    private var _startKeyDocId: String?
-    private var _endKeyDocId: String?
-    private var _include: Bool = true
-    private var _fullSet: Bool = true
 
     internal init(designDocument: String, viewName: String) {
         //May not need this?
@@ -150,6 +134,13 @@ public class ViewQuery {
             return query
         }
         return ""
+    }
+    
+    internal func isIncludeDocs() -> Bool {
+        if let include = options["include_docs"] as? Bool {
+            return include
+        }
+        return false
     }
 
     /// Mirrors JSON.stringify in javascript

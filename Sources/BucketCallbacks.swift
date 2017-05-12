@@ -149,5 +149,29 @@ internal class BucketCallbacks {
             }
         }
     }
+    
+    static let viewQueryCallback : lcb_VIEWQUERYCALLBACK = {
+        (instance, cbtype, row) -> Void in
+        
+        // If we have no callback, we don't need to do anything else
+        guard let callback = row?.pointee.cookie,
+            let lcb = instance, // If we don't have an instance thats a problem
+            let delegate = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? ViewQueryCallbackDelegate,
+            let completion = delegate.callback else {
+                return
+        }
+        
+        if let err = row?.pointee.rc, err != LCB_SUCCESS {
+            completion(ViewQueryResult.error(lcb_errortext(instance, err)))
+            return
+        }
+        
+        guard let response = row?.pointee else {
+            completion(ViewQueryResult.error("Success with No response found"))
+            return
+        }
+        
+        ///TODO: finish!
+    }
 
 }

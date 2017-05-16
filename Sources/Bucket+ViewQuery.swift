@@ -26,6 +26,8 @@ extension Bucket {
             vCmd.cmdflags |= UInt32(LCB_CMDVIEWQUERY_F_INCLUDE_DOCS)
         }
         
+        vCmd.callback = BucketCallbacks.viewQueryCallback
+        
         let delegate = ViewQueryCallbackDelegate()
         delegate.callback = completion
         let retainedCookie = Unmanaged.passRetained(delegate)

@@ -12,6 +12,6 @@ import libcouchbase
 public typealias ViewQueryCallback = (ViewQueryResult) -> Void
 
 public class ViewQueryCallbackDelegate {
-    internal var rows = [Any]()
+    internal var rows = [ViewQueryRow]()
     internal var callback: ViewQueryCallback?
 }

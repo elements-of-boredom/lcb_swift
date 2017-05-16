@@ -40,11 +40,37 @@ func LCB_CMD_SET_VALUE(_ cmd: inout lcb_CMDSTORE, _ value: String, _ len: Int) {
     cmd.value.u_buf.contig.nbytes = len
 }
 
+/// Pulls the internal error string from a libcouchbase error code
+///
+/// - Parameters:
+///   - instance: libcouchbase instance
+///   - error: error returned from libcouchbase
+/// - Returns: string representing the known error.
 func lcb_errortext(_ instance: lcb_t?, _ error: lcb_error_t) -> String {
     if let instance = instance,
         let errorMessage = lcb_strerror(instance, error),
         let message = String(utf8String:errorMessage) {
-        return message
+        return "\(error.rawValue) - \(message)"
     }
     return "Failed with unknown error: \(error)"
+}
+
+/// Helper to wrap the memory unsafe String initialization required to pull most strings from libcoucbase callbacks
+///
+/// - Parameters:
+///   - value: Pointer to a memory offset to begin reading
+///   - len: bytes count to read
+/// - Returns: UTF8 string from the bytes read.
+func lcb_string(value: UnsafePointer<Int8>!, len: Int) -> String? {
+    return String(bytesNoCopy:UnsafeMutableRawPointer(mutating:value), length:len, encoding:.utf8, freeWhenDone:false)
+}
+
+/// Helper to wrap the memory unsafe String initialization required to pull most strings from libcoucbase callbacks
+///
+/// - Parameters:
+///   - value: Pointer to a memory offset to begin reading
+///   - len: bytes count to read
+/// - Returns: UTF8 string from the bytes read.
+func lcb_string(value: UnsafeRawPointer, len: Int) -> String? {
+    return String(bytesNoCopy:UnsafeMutableRawPointer(mutating:value), length:len, encoding:.utf8, freeWhenDone:false)
 }

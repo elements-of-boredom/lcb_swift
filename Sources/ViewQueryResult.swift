@@ -8,7 +8,7 @@
 
 import Foundation
 public enum ViewQueryResult {
-    case success([Any]?)
+    case success([ViewQueryRow]?, ViewQueryMeta?)
     case error(String)
     
 }

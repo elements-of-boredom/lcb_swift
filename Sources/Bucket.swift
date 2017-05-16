@@ -14,6 +14,7 @@ public class Bucket {
     private let name: String
     private let userName: String
     private let password: String?
+    internal static var transcoder = Transcoder()
 
     /// Default Bucket initializer
     ///
@@ -26,7 +27,7 @@ public class Bucket {
         self.name = name
         self.password = password
         self.userName = name
-
+        
         var cropts: lcb_create_st = lcb_create_st()
         cropts.version = 3
         cropts.v.v3.connstr = connection.absoluteString.utf8String
@@ -255,10 +256,10 @@ extension Bucket {
             jsonString = stringValue
             cmdOptions.dataTypeFlags = .string
         } else {
-            guard let encodedString = try Bucket.encodeValue(value: value) else {
+            guard let encodedString = try? Bucket.transcoder.encode(value: value) else {
                 throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
             }
-            jsonString = encodedString
+            jsonString = encodedString!
             cmdOptions.dataTypeFlags = .json
         }
 
@@ -325,7 +326,7 @@ extension Bucket {
     /// - Throws: CouchbaseError.FailedOperationSchedule, FailedSerialization
     public func replace(key: String, value:Any, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
-        guard let jsonString = try Bucket.encodeValue(value: value) else {
+        guard let jsonString = try Bucket.transcoder.encode(value: value) else {
             throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
         }
         var cmdOptions = CmdOptions(opts:options)
@@ -405,7 +406,7 @@ extension Bucket {
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func upsert(key: String, value:Any, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
-        guard let jsonString = try Bucket.encodeValue(value: value) else {
+        guard let jsonString = try Bucket.transcoder.encode(value: value) else {
             throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
         }
         var cmdOptions = CmdOptions(opts:options)
@@ -593,32 +594,4 @@ extension Bucket {
         }
     }
 
-    /// Encodes an encodable value into a JSON string
-    ///
-    /// - Parameter value: value attempting to be encoded
-    /// - Returns: JSON encoded string.
-    /// - Throws: When the value cannot be encoded, or if during encoding there is an error
-    internal static func encodeValue(value:Any) throws -> String? {
-        if JSONSerialization.isValidJSONObject(value) {
-            return String(data: try JSONSerialization.data(withJSONObject: value, options: .prettyPrinted), encoding:.utf8)
-        }
-        throw CouchbaseError.failedSerialization("Value provided is not in a format that can be json serialized")
-
-    }
-
-    /// decodes a JSON string into a json object (Any)-> [String:Any]
-    /// this convenience call is here so that we can wrap all the work in an autoreleasepool because
-    /// both String.data(using:), AND .jsonObject leak memory at a questionable rate.
-    ///
-    /// - Parameter value: json string to decode
-    /// - Returns: Returns a Foundation object from given JSON data.
-    /// - Throws: exceptions
-    internal static func decodeValue(value: String) throws -> Any {
-        return try autoreleasepool {
-            if let value = value.data(using: .utf8) {
-                return try JSONSerialization.jsonObject(with: value, options: [])
-            }
-            throw LCBSwiftError.notImplemented("Placeholder")
-        }
-    }
 }

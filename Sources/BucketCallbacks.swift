@@ -29,15 +29,16 @@ internal class BucketCallbacks {
             completion(OperationResult.error("Success with No response found"))
             return
         }
-
+        
+        //Eventually handle decoding centralized to share w/ ViewQuery
+        
         let bytes = Data(bytes:response.bytes, count:response.nbytes)
-        let value = String(data: bytes, encoding: String.Encoding.utf8)!
         do {
-            var json = try JSONSerialization.jsonObject(with: bytes, options: [])
+            var json = try Bucket.transcoder.decode(value: bytes)
             completion(OperationResult.success(value: json, cas: response.cas))
         } catch {
             if response.cas != 0 {
-                completion(OperationResult.success(value:value, cas:response.cas))
+                completion(OperationResult.success(value:bytes, cas:response.cas))
                 return
             }
             completion(OperationResult.error("Error attempting to create the response document"))
@@ -124,7 +125,7 @@ internal class BucketCallbacks {
                 //Error string parse
                 if let row = response.row {
                     let data = String(utf8String:row)!
-                    if let result = try? Bucket.decodeValue(value:data) {
+                    if let result = try? Bucket.transcoder.decode(value:data) {
                         completion(N1QLQueryResult.queryFailed(result))
                         return
                     }
@@ -132,46 +133,96 @@ internal class BucketCallbacks {
                 }
             } else {
                 //Meta string parse
-                let data = String(utf8String:response.row)!
                 var meta : Any?
-
-                if let result = try? Bucket.decodeValue(value:data) {
+                if let result = try? Bucket.transcoder.decode(value:Data(bytes: response.row, count: response.nrow)) {
                     meta = result
                 }
                 completion(N1QLQueryResult.success(meta:meta, rows:delegate.rows))
-
             }
 
         } else {
-            let value = String(bytesNoCopy:UnsafeMutableRawPointer(mutating:response.row), length:response.nrow, encoding:.utf8, freeWhenDone:false)!
-            if let result = try? Bucket.decodeValue(value:value) {
+            let value = lcb_string(value:response.row, len:response.nrow)!
+            if let result = try? Bucket.transcoder.decode(value:value) {
                 delegate.rows.append(result)
             }
         }
     }
     
-    static let viewQueryCallback : lcb_VIEWQUERYCALLBACK = {
+    static let viewQueryCallback: lcb_VIEWQUERYCALLBACK = {
         (instance, cbtype, row) -> Void in
         
         // If we have no callback, we don't need to do anything else
-        guard let callback = row?.pointee.cookie,
+        guard let response = row?.pointee,
+            let callback = response.cookie,
             let lcb = instance, // If we don't have an instance thats a problem
-            let delegate = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? ViewQueryCallbackDelegate,
+            let delegate = Unmanaged<AnyObject>.fromOpaque(callback).takeUnretainedValue() as? ViewQueryCallbackDelegate,
             let completion = delegate.callback else {
                 return
         }
         
-        if let err = row?.pointee.rc, err != LCB_SUCCESS {
-            completion(ViewQueryResult.error(lcb_errortext(instance, err)))
+        let viewRow = ViewQueryRow()
+        
+        //When we get the final response
+        if (UInt32(response.rflags) & LCB_RESP_F_FINAL.rawValue) != 0 {
+            //Claim our delegate using RetainedVavlue to prevent leaks.
+            _ = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? ViewQueryCallbackDelegate
+            var dataResult: String?
+            if response.rc != LCB_SUCCESS {
+                if let htresp = response.htresp, let body = htresp.pointee.body {
+                    if let dataResult = lcb_string(value:htresp.pointee.body, len:htresp.pointee.nbody), dataResult.utf8.count > 0 {
+                        completion(ViewQueryResult.error(dataResult))
+                    } else {
+                        completion(ViewQueryResult.error(lcb_errortext(instance, response.rc)))
+                    }
+                }
+            } else {
+                if let meta = lcb_string(value:response.value, len:response.nvalue) {
+                    dataResult = meta
+                }
+            }
+            
+            var meta: ViewQueryMeta?
+            if let dr = dataResult, let result = try? Bucket.transcoder.decode(value:dr), let dict = result as? [String:Any] {
+                meta = try? ViewQueryMeta(dict: dict)
+            }
+            completion(ViewQueryResult.success(delegate.rows, meta))
             return
         }
         
-        guard let response = row?.pointee else {
-            completion(ViewQueryResult.error("Success with No response found"))
-            return
+        //Always exists. When we are in Final its Meta data, otherwise...unsure
+        if let value = response.value, let key = response.key {
+            let value = lcb_string(value:response.value, len:response.nvalue)!
+            let key = lcb_string(value:response.key, len:response.nkey)!
+            viewRow.key = key
+            viewRow.value = value
         }
         
-        ///TODO: finish!
+        if response.ngeometry > 0, let geo = lcb_string(value:response.geometry, len:response.ngeometry) {
+            if let result = try? Bucket.transcoder.decode(value:geo) {
+                viewRow.geometry = result
+            } else {
+                viewRow.errors = geo
+            }
+        }
+        
+        //Get the document id, and its body if specified.
+        if let docid = response.docid, let docId = lcb_string(value:response.docid, len:response.ndocid) {
+            viewRow.docId = docId
+            
+            if let docresp = response.docresp {
+                if docresp.pointee.rc == LCB_SUCCESS {
+                    let bytes = Data(bytes:docresp.pointee.value, count:docresp.pointee.nvalue)
+                    do {
+                        var json = try Bucket.transcoder.decode(value: bytes)
+                        viewRow.doc = json
+                    } catch {
+                        viewRow.doc = bytes
+                    }
+
+                }
+            }
+        }
+        delegate.rows.append(viewRow)
     }
 
 }

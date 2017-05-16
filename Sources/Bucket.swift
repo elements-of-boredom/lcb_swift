@@ -14,7 +14,7 @@ public class Bucket {
     private let name: String
     private let userName: String
     private let password: String?
-    internal static var transcoder = Transcoder()
+    internal var transcoder = Transcoder()
 
     /// Default Bucket initializer
     ///
@@ -106,7 +106,7 @@ extension Bucket {
             ccmd.create = 1
         }
 
-        let delegate = CallbackDelegate(isDelete: false, persistTo: options.persistTo, replicateTo: options.replicateTo)
+        let delegate = CallbackDelegate(bucket: self, isDelete: false, persistTo: options.persistTo, replicateTo: options.replicateTo)
         delegate.callback = completion
         let retainedCookie = Unmanaged.passRetained(delegate)
 
@@ -223,7 +223,7 @@ extension Bucket {
             getRCMD.strategy = LCB_REPLICA_FIRST
         }
 
-        let delegate = CallbackDelegate()
+        let delegate = CallbackDelegate(bucket: self)
         delegate.callback = completion
         let retainedCookie = Unmanaged.passRetained(delegate)
 
@@ -256,7 +256,7 @@ extension Bucket {
             jsonString = stringValue
             cmdOptions.dataTypeFlags = .string
         } else {
-            guard let encodedString = try? Bucket.transcoder.encode(value: value) else {
+            guard let encodedString = try? transcoder.encode(value: value) else {
                 throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
             }
             jsonString = encodedString!
@@ -303,7 +303,7 @@ extension Bucket {
         rCMD.key.contig.nbytes = key.utf8.count
         rCMD.cas = options.cas
 
-        let delegate = CallbackDelegate(isDelete: true, persistTo: options.persistTo, replicateTo: options.replicateTo)
+        let delegate = CallbackDelegate(bucket: self, isDelete: true, persistTo: options.persistTo, replicateTo: options.replicateTo)
         delegate.callback = completion
         let retainedCookie = Unmanaged.passRetained(delegate)
 
@@ -326,7 +326,7 @@ extension Bucket {
     /// - Throws: CouchbaseError.FailedOperationSchedule, FailedSerialization
     public func replace(key: String, value:Any, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
-        guard let jsonString = try Bucket.transcoder.encode(value: value) else {
+        guard let jsonString = try transcoder.encode(value: value) else {
             throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
         }
         var cmdOptions = CmdOptions(opts:options)
@@ -353,7 +353,7 @@ extension Bucket {
 
         LCB_CMD_SET_KEY(&cmd, key, key.utf8.count)
 
-        let delegate = CallbackDelegate()
+        let delegate = CallbackDelegate(bucket: self)
         delegate.callback = completion
         let retainedCookie = Unmanaged.passRetained(delegate)
 
@@ -381,7 +381,7 @@ extension Bucket {
         cmd.cas = cas
         LCB_CMD_SET_KEY(&cmd, key, key.utf8.count)
 
-        let delegate = CallbackDelegate()
+        let delegate = CallbackDelegate(bucket: self)
         delegate.callback = completion
         let retainedCookie = Unmanaged.passRetained(delegate)
 
@@ -406,7 +406,7 @@ extension Bucket {
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func upsert(key: String, value:Any, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
-        guard let jsonString = try Bucket.transcoder.encode(value: value) else {
+        guard let jsonString = try transcoder.encode(value: value) else {
             throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
         }
         var cmdOptions = CmdOptions(opts:options)
@@ -485,7 +485,7 @@ extension Bucket {
     ///   - callback: user supplied callback method to call on completion
     /// - Throws: CouchbaseError.FailedOperationSchedule
     fileprivate func invokeGet(cmd: inout lcb_CMDGET, callback:@escaping OpCallback) throws {
-        let delegate = CallbackDelegate()
+        let delegate = CallbackDelegate(bucket: self)
         delegate.callback = callback
 
         let retainedCookie = Unmanaged.passRetained(delegate)
@@ -507,7 +507,7 @@ extension Bucket {
     ///   - callback: user supplied callback method to call on completion
     /// - Throws: CouchbaseError.FailedOperationSchedule
     fileprivate func invokeStore(cmd: inout lcb_CMDSTORE, options: CmdOptions, callback: @escaping OpCallback) throws {
-        let delegate = CallbackDelegate(persistTo: options.persistTo, replicateTo: options.replicateTo)
+        let delegate = CallbackDelegate(bucket: self, persistTo: options.persistTo, replicateTo: options.replicateTo)
         delegate.callback = callback
 
         let retainedCookie = Unmanaged.passRetained(delegate)
@@ -578,7 +578,7 @@ extension Bucket {
                 }
             }
 
-            let delegate = CallbackDelegate()
+            let delegate = CallbackDelegate(bucket: delegate.bucket)
             delegate.callback = callback
 
             let retainedCookie = Unmanaged.passRetained(delegate)

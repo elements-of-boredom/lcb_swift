@@ -20,4 +20,9 @@ public class N1QLCallbackDelegate {
 
     internal var rows = [Any]()
     internal var callback: N1QLCallback?
+    internal let bucket: Bucket
+    
+    init(bucket: Bucket) {
+        self.bucket = bucket
+    }
 }

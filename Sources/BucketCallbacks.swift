@@ -15,8 +15,8 @@ internal class BucketCallbacks {
 
         // If we have no callback, we don't need to do anything else
         guard let callback = cookie,
-            let wrapper = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? CallbackDelegate,
-            let completion = wrapper.callback else {
+            let delegate = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? CallbackDelegate,
+            let completion = delegate.callback else {
                 return
         }
 
@@ -34,7 +34,7 @@ internal class BucketCallbacks {
         
         let bytes = Data(bytes:response.bytes, count:response.nbytes)
         do {
-            var json = try Bucket.transcoder.decode(value: bytes)
+            var json = try delegate.bucket.transcoder.decode(value: bytes)
             completion(OperationResult.success(value: json, cas: response.cas))
         } catch {
             if response.cas != 0 {
@@ -125,7 +125,7 @@ internal class BucketCallbacks {
                 //Error string parse
                 if let row = response.row {
                     let data = String(utf8String:row)!
-                    if let result = try? Bucket.transcoder.decode(value:data) {
+                    if let result = try? delegate.bucket.transcoder.decode(value:data) {
                         completion(N1QLQueryResult.queryFailed(result))
                         return
                     }
@@ -134,7 +134,7 @@ internal class BucketCallbacks {
             } else {
                 //Meta string parse
                 var meta : Any?
-                if let result = try? Bucket.transcoder.decode(value:Data(bytes: response.row, count: response.nrow)) {
+                if let result = try? delegate.bucket.transcoder.decode(value:Data(bytes: response.row, count: response.nrow)) {
                     meta = result
                 }
                 completion(N1QLQueryResult.success(meta:meta, rows:delegate.rows))
@@ -142,7 +142,7 @@ internal class BucketCallbacks {
 
         } else {
             let value = lcb_string(value:response.row, len:response.nrow)!
-            if let result = try? Bucket.transcoder.decode(value:value) {
+            if let result = try? delegate.bucket.transcoder.decode(value:value) {
                 delegate.rows.append(result)
             }
         }
@@ -182,7 +182,7 @@ internal class BucketCallbacks {
             }
             
             var meta: ViewQueryMeta?
-            if let dr = dataResult, let result = try? Bucket.transcoder.decode(value:dr), let dict = result as? [String:Any] {
+            if let dr = dataResult, let result = try? delegate.bucket.transcoder.decode(value:dr), let dict = result as? [String:Any] {
                 meta = try? ViewQueryMeta(dict: dict)
             }
             completion(ViewQueryResult.success(delegate.rows, meta))
@@ -198,7 +198,7 @@ internal class BucketCallbacks {
         }
         
         if response.ngeometry > 0, let geo = lcb_string(value:response.geometry, len:response.ngeometry) {
-            if let result = try? Bucket.transcoder.decode(value:geo) {
+            if let result = try? delegate.bucket.transcoder.decode(value:geo) {
                 viewRow.geometry = result
             } else {
                 viewRow.errors = geo
@@ -213,7 +213,7 @@ internal class BucketCallbacks {
                 if docresp.pointee.rc == LCB_SUCCESS {
                     let bytes = Data(bytes:docresp.pointee.value, count:docresp.pointee.nvalue)
                     do {
-                        var json = try Bucket.transcoder.decode(value: bytes)
+                        var json = try delegate.bucket.transcoder.decode(value: bytes)
                         viewRow.doc = json
                     } catch {
                         viewRow.doc = bytes

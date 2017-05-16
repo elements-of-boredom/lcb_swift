@@ -28,7 +28,7 @@ extension Bucket {
         
         vCmd.callback = BucketCallbacks.viewQueryCallback
         
-        let delegate = ViewQueryCallbackDelegate()
+        let delegate = ViewQueryCallbackDelegate(bucket: self)
         delegate.callback = completion
         let retainedCookie = Unmanaged.passRetained(delegate)
         

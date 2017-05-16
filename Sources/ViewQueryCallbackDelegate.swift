@@ -14,4 +14,9 @@ public typealias ViewQueryCallback = (ViewQueryResult) -> Void
 public class ViewQueryCallbackDelegate {
     internal var rows = [ViewQueryRow]()
     internal var callback: ViewQueryCallback?
+    internal let bucket: Bucket
+    
+    init(bucket: Bucket) {
+        self.bucket = bucket
+    }
 }

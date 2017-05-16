@@ -43,9 +43,9 @@ class ViewQueryIntegrationTests: XCTestCase {
                 XCTFail(msg)
             case let .success(results, meta):
                 if let docid = results, let firstrow = docid.first {
-                    XCTAssert(firstrow.doc == nil, "No document should exist as include_docs was not added")
-                    XCTAssert(firstrow.errors == nil)
-                    XCTAssert(meta != nil)
+                    XCTAssertNil(firstrow.doc, "No document should exist as include_docs was not added")
+                    XCTAssertNil(firstrow.errors)
+                    XCTAssertNotNil(meta)
                 }
                 exp.fulfill()
             }
@@ -65,10 +65,10 @@ class ViewQueryIntegrationTests: XCTestCase {
             case let .success(results, meta):
                 if let docid = results, let firstrow = docid.first {
                     print(firstrow.key)
-                    XCTAssert(firstrow.doc != nil)
-                    XCTAssert(firstrow.errors == nil)
+                    XCTAssertNotNil(firstrow.doc)
+                    XCTAssertNil(firstrow.errors)
                     XCTAssert(results?.count == 10)
-                    XCTAssert(meta != nil)
+                    XCTAssertNotNil(meta)
                     XCTAssert((meta?.totalRows)! >= (results?.count)!)
                 }
                 exp.fulfill()

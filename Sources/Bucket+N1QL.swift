@@ -44,7 +44,7 @@ extension Bucket {
         n1CMD.content_type = "application/json".utf8String
         n1CMD.callback = BucketCallbacks.n1qlRowCallback
 
-        let delegate = N1QLCallbackDelegate()
+        let delegate = N1QLCallbackDelegate(bucket: self)
         delegate.callback = completion
 
         let retainedCookie = Unmanaged.passRetained(delegate)

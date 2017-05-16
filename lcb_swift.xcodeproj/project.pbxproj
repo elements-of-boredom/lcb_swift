@@ -244,7 +244,6 @@
 				379746611EC36CB300690622 /* BucketCallbacks.swift */,
 				379746651EC36E9200690622 /* Bucket+N1QL.swift */,
 				379746801EC39D5F00690622 /* Bucket+ViewQuery.swift */,
-				3745C91D1ECB7D0300B9899A /* Transcoder.swift */,
 			);
 			name = Bucket;
 			sourceTree = "<group>";
@@ -363,6 +362,7 @@
 		OBJ_7 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				3745C91D1ECB7D0300B9899A /* Transcoder.swift */,
 				379746881EC3C15200690622 /* Extensions */,
 				379746691EC3721500690622 /* QueryTypes */,
 				3797465C1EC360AB00690622 /* Bucket */,

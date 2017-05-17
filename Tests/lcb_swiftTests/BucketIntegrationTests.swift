@@ -25,6 +25,7 @@ class BucketIntegrationTests: XCTestCase {
             bucket = try cluster.openBucket(name:"default")
         } catch {
             XCTFail("Failed to initalize cluster, check to  make sure couchbase is running")
+            exit(1)
         }
     }
 
@@ -170,9 +171,8 @@ class BucketIntegrationTests: XCTestCase {
             switch result {
             case .success(_):
                 updateE.fulfill()
-            case .error(_):
-                XCTFail()
-                updateE.fulfill()
+            case let .error(msg):
+                XCTFail(msg)
             }
         }
         expect()
@@ -186,9 +186,11 @@ class BucketIntegrationTests: XCTestCase {
                     XCTAssert(result == "Holla Back!")
                     readE.fulfill()
                 }
+                else{
+                    XCTFail(doc as! String)
+                }
                 case let .error(msg):
                 XCTFail(msg)
-                readE.fulfill()
             }
         }
 

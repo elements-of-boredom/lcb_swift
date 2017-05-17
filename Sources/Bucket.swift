@@ -256,10 +256,10 @@ extension Bucket {
             jsonString = stringValue
             cmdOptions.dataTypeFlags = .string
         } else {
-            guard let encodedString = try? transcoder.encode(value: value) else {
+            guard let encodedString = try? transcoder.encodeJson(value: value) else {
                 throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
             }
-            jsonString = encodedString!
+            jsonString = encodedString
             cmdOptions.dataTypeFlags = .json
         }
 
@@ -326,7 +326,7 @@ extension Bucket {
     /// - Throws: CouchbaseError.FailedOperationSchedule, FailedSerialization
     public func replace(key: String, value:Any, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
-        guard let jsonString = try transcoder.encode(value: value) else {
+        guard let jsonString = try? transcoder.encodeJson(value: value) else {
             throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
         }
         var cmdOptions = CmdOptions(opts:options)
@@ -406,7 +406,7 @@ extension Bucket {
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func upsert(key: String, value:Any, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
-        guard let jsonString = try transcoder.encode(value: value) else {
+        guard let jsonString = try? transcoder.encodeJson(value: value) else {
             throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
         }
         var cmdOptions = CmdOptions(opts:options)

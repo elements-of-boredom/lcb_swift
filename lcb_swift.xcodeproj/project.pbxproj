@@ -362,7 +362,6 @@
 		OBJ_7 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				3745C91D1ECB7D0300B9899A /* Transcoder.swift */,
 				379746881EC3C15200690622 /* Extensions */,
 				379746691EC3721500690622 /* QueryTypes */,
 				3797465C1EC360AB00690622 /* Bucket */,
@@ -374,6 +373,7 @@
 				3780F0081EAA8618001C197F /* Cluster.swift */,
 				3780F00E1EAA939C001C197F /* Authenticator.swift */,
 				378A607F1EAF942500651D86 /* Macros.swift */,
+				3745C91D1ECB7D0300B9899A /* Transcoder.swift */,
 			);
 			path = Sources;
 			sourceTree = SOURCE_ROOT;

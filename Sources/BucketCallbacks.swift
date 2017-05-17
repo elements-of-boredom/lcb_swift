@@ -33,16 +33,8 @@ internal class BucketCallbacks {
         //Eventually handle decoding centralized to share w/ ViewQuery
         
         let bytes = Data(bytes:response.bytes, count:response.nbytes)
-        do {
-            var json = try delegate.bucket.transcoder.decode(value: bytes)
-            completion(OperationResult.success(value: json, cas: response.cas))
-        } catch {
-            if response.cas != 0 {
-                completion(OperationResult.success(value:bytes, cas:response.cas))
-                return
-            }
-            completion(OperationResult.error("Error attempting to create the response document"))
-        }
+        var result = delegate.bucket.transcoder.decode(value: bytes, flags:response.flags)
+        completion(OperationResult.success(value: result, cas: response.cas))
     }
 
     static let removeCallback: lcb_RESPCALLBACK = {
@@ -123,9 +115,8 @@ internal class BucketCallbacks {
             _ = Unmanaged<AnyObject>.fromOpaque(callback).takeRetainedValue() as? N1QLCallbackDelegate
             if response.rc != LCB_SUCCESS {
                 //Error string parse
-                if let row = response.row {
-                    let data = String(utf8String:row)!
-                    if let result = try? delegate.bucket.transcoder.decode(value:data) {
+                if let row = response.row, let data = lcb_string(value: response.row, len: response.nrow) {
+                    if let result = try? delegate.bucket.transcoder.decodeJson(value:data) {
                         completion(N1QLQueryResult.queryFailed(result))
                         return
                     }
@@ -134,7 +125,7 @@ internal class BucketCallbacks {
             } else {
                 //Meta string parse
                 var meta : Any?
-                if let result = try? delegate.bucket.transcoder.decode(value:Data(bytes: response.row, count: response.nrow)) {
+                if let result = try? delegate.bucket.transcoder.decodeJson(value:Data(bytes: response.row, count: response.nrow)) {
                     meta = result
                 }
                 completion(N1QLQueryResult.success(meta:meta, rows:delegate.rows))
@@ -142,7 +133,7 @@ internal class BucketCallbacks {
 
         } else {
             let value = lcb_string(value:response.row, len:response.nrow)!
-            if let result = try? delegate.bucket.transcoder.decode(value:value) {
+            if let result = try? delegate.bucket.transcoder.decodeJson(value:value) {
                 delegate.rows.append(result)
             }
         }
@@ -182,7 +173,7 @@ internal class BucketCallbacks {
             }
             
             var meta: ViewQueryMeta?
-            if let dr = dataResult, let result = try? delegate.bucket.transcoder.decode(value:dr), let dict = result as? [String:Any] {
+            if let dr = dataResult, let result = try? delegate.bucket.transcoder.decodeJson(value:dr), let dict = result as? [String:Any] {
                 meta = try? ViewQueryMeta(dict: dict)
             }
             completion(ViewQueryResult.success(delegate.rows, meta))
@@ -198,7 +189,7 @@ internal class BucketCallbacks {
         }
         
         if response.ngeometry > 0, let geo = lcb_string(value:response.geometry, len:response.ngeometry) {
-            if let result = try? delegate.bucket.transcoder.decode(value:geo) {
+            if let result = try? delegate.bucket.transcoder.decodeJson(value:geo) {
                 viewRow.geometry = result
             } else {
                 viewRow.errors = geo
@@ -212,13 +203,8 @@ internal class BucketCallbacks {
             if let docresp = response.docresp {
                 if docresp.pointee.rc == LCB_SUCCESS {
                     let bytes = Data(bytes:docresp.pointee.value, count:docresp.pointee.nvalue)
-                    do {
-                        var json = try delegate.bucket.transcoder.decode(value: bytes)
-                        viewRow.doc = json
-                    } catch {
-                        viewRow.doc = bytes
-                    }
-
+                    var result = delegate.bucket.transcoder.decode(value: bytes, flags:docresp.pointee.itmflags)
+                    viewRow.doc = result
                 }
             }
         }

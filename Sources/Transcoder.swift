@@ -8,15 +8,45 @@
 
 import Foundation
 public class Transcoder {
+    private let mask: UInt32 = 0xFF000000
+    public func encode(value: Data, flags: Int) -> Any {
+        return 0
+    }
+    
+    public func decode(value: Data, flags: UInt32) -> Any {
+        let format = flags & mask
+        
+        switch format {
+        case DataFormat.json.rawValue:
+            do {
+                return try self.encodeJson(value:value)
+            } catch {
+                //return raw if parse fails.
+                return value
+            }
+        case DataFormat.binary.rawValue:
+            return value
+        case DataFormat.string.rawValue:
+            return String(data:value, encoding:.utf8)!
+        case DataFormat.reserved.rawValue: //Append/prepend
+            return String(data:value, encoding:.utf8)!
+        //Don't know where or how this is used, assume the user knows what to do with it.
+        case DataFormat.lcbPrivate.rawValue:
+            return value
+        //Exhaustive case statement required because our enum extends UInt32
+        default:
+            return value
+        }
+    }
     
     /// Encodes an encodable value into a JSON string
     ///
     /// - Parameter value: value attempting to be encoded
     /// - Returns: JSON encoded string.
     /// - Throws: When the value cannot be encoded, or if during encoding there is an error
-    internal func encode(value:Any) throws -> String? {
+    public func encodeJson(value:Any) throws -> String {
         if JSONSerialization.isValidJSONObject(value) {
-            return String(data: try JSONSerialization.data(withJSONObject: value, options: .prettyPrinted), encoding:.utf8)
+            return String(data: try JSONSerialization.data(withJSONObject: value, options: .prettyPrinted), encoding:.utf8)!
         }
         throw CouchbaseError.failedSerialization("Value provided is not in a format that can be json serialized")
         
@@ -29,7 +59,7 @@ public class Transcoder {
     /// - Parameter value: json string to decode
     /// - Returns: Returns a Foundation object from given JSON data.
     /// - Throws: exceptions
-    internal func decode(value: String) throws -> Any {
+    public func decodeJson(value: String) throws -> Any {
         return try autoreleasepool {
             if let value = value.data(using: .utf8) {
                 return try JSONSerialization.jsonObject(with: value, options: [])
@@ -44,7 +74,7 @@ public class Transcoder {
     /// - Parameter value: bytes to decode to a json object
     /// - Returns: a foundation object from given JSON data
     /// - Throws: exceptions
-    internal func decode(value: Data) throws -> Any {
+    internal func decodeJson(value: Data) throws -> Any {
         return try autoreleasepool {
             return try JSONSerialization.jsonObject(with: value, options: [])
         }

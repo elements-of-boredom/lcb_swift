@@ -64,6 +64,7 @@ class ViewQueryTests: XCTestCase {
         let query = vq.limit(10)
             .skip(15).range(start:[0,1,2,3], end:[4,5,6,7])
             .boundingBox(left: 1, top: 2, right: 3, bottom: 4)
+            .stale(.allowStale)
         
         let queryString = query.optionString()
         XCTAssertTrue(queryString.contains("limit=10"))
@@ -71,6 +72,7 @@ class ViewQueryTests: XCTestCase {
         XCTAssertTrue(queryString.contains("start_range=[0, 1, 2, 3]"))
         XCTAssertTrue(queryString.contains("end_range=[4, 5, 6, 7]"))
         XCTAssertTrue(queryString.contains("bbox=1,2,3,4"))
+        XCTAssertTrue(queryString.contains("stale=ok"))
     }
 
     static var allTests = [

@@ -22,6 +22,11 @@ public class SpatialQuery {
         return SpatialQuery(designDocument: designDocument, viewName: viewName)
     }
     
+    public func stale(_ stale: ViewIndexState) -> SpatialQuery {
+        self.options["stale"] = stale.description()
+        return self
+    }
+    
     public func skip(_ amount: Int32) -> SpatialQuery {
         self.options["skip"] = amount
         return self

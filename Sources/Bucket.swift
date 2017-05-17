@@ -74,11 +74,12 @@ extension Bucket {
     public func append(key: String, value: String, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
         var cmdOptions = CmdOptions(opts:options)
-        cmdOptions.dataTypeFlags = .reserved
         cmdOptions.operation = .append
 
         var cmd  = createStoreCMD(cmdOptions, key: key)
-        LCB_CMD_SET_VALUE(&cmd, value, value.utf8.count)
+        try transcoder.encode(cmd: &cmd, value: value)
+        //flags have to be 0 for append/prepend
+        cmd.flags = DataFormat.reserved.rawValue
 
         try self.invokeStore(cmd: &cmd, options: cmdOptions, callback: completion)
     }
@@ -250,22 +251,9 @@ extension Bucket {
     public func insert(key: String, value:Any, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
         var cmdOptions = CmdOptions(opts:options)
         cmdOptions.operation = .insert
-        
-        var jsonString: String
-        if let stringValue = (value as? String) {
-            jsonString = stringValue
-            cmdOptions.dataTypeFlags = .string
-        } else {
-            guard let encodedString = try? transcoder.encodeJson(value: value) else {
-                throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
-            }
-            jsonString = encodedString
-            cmdOptions.dataTypeFlags = .json
-        }
-
         var cmd  = createStoreCMD(cmdOptions, key: key)
-        LCB_CMD_SET_VALUE(&cmd, jsonString, jsonString.utf8.count)
-
+        
+        try transcoder.encode(cmd:&cmd, value: value)
         try self.invokeStore(cmd: &cmd, options:cmdOptions, callback:completion)
     }
 
@@ -280,11 +268,12 @@ extension Bucket {
     public func prepend(key: String, value: String, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
         var cmdOptions = CmdOptions(opts:options)
-        cmdOptions.dataTypeFlags = .reserved
         cmdOptions.operation = .prepend
         
         var cmd  = createStoreCMD(cmdOptions, key: key)
-        LCB_CMD_SET_VALUE(&cmd, value, value.utf8.count)
+        try transcoder.encode(cmd: &cmd, value: value)
+        //flags have to be 0 for append/prepend
+        cmd.flags = DataFormat.reserved.rawValue
 
         try self.invokeStore(cmd: &cmd, options: cmdOptions, callback: completion)
     }
@@ -326,15 +315,11 @@ extension Bucket {
     /// - Throws: CouchbaseError.FailedOperationSchedule, FailedSerialization
     public func replace(key: String, value:Any, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
 
-        guard let jsonString = try? transcoder.encodeJson(value: value) else {
-            throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
-        }
         var cmdOptions = CmdOptions(opts:options)
-        cmdOptions.dataTypeFlags = .json
         cmdOptions.operation = .replace
         
         var cmd  = createStoreCMD(cmdOptions, key: key)
-        LCB_CMD_SET_VALUE(&cmd, jsonString, jsonString.utf8.count)
+        try transcoder.encode(cmd: &cmd, value: value)
 
         try self.invokeStore(cmd: &cmd, options: cmdOptions, callback: completion)
     }
@@ -405,16 +390,11 @@ extension Bucket {
     ///   - completion: Callback that will be called on completion
     /// - Throws: CouchbaseError.FailedOperationSchedule
     public func upsert(key: String, value:Any, options: StoreOptions = StoreOptions(), completion: @escaping OpCallback ) throws {
-
-        guard let jsonString = try? transcoder.encodeJson(value: value) else {
-            throw CouchbaseError.failedSerialization("value provided is not in a proper format to be serialized")
-        }
         var cmdOptions = CmdOptions(opts:options)
-        cmdOptions.dataTypeFlags = .json
         cmdOptions.operation = .upsert
         
         var cmd  = createStoreCMD(cmdOptions, key: key)
-        LCB_CMD_SET_VALUE(&cmd, jsonString, jsonString.utf8.count)
+        try transcoder.encode(cmd: &cmd, value: value)
 
         try self.invokeStore(cmd: &cmd, options: cmdOptions, callback: completion)
     }

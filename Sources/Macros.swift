@@ -34,11 +34,6 @@ func LCB_CMD_SET_KEY(_ cmd: inout lcb_CMDUNLOCK, _ key: String, _ len: Int) {
     cmd.key.contig.nbytes = len
 }
 
-func LCB_CMD_SET_VALUE(_ cmd: inout lcb_CMDSTORE, _ value: String, _ len: Int) {
-    cmd.value.vtype = LCB_KV_COPY
-    cmd.value.u_buf.contig.bytes = value.rawUTF8String
-    cmd.value.u_buf.contig.nbytes = len
-}
 
 /// Pulls the internal error string from a libcouchbase error code
 ///

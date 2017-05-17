@@ -12,15 +12,14 @@ import libcouchbase
 public class Transcoder {
     private let mask: UInt32 = 0xFF000000
     
-    
     /// Called from storage operations which need the user supplied value encoded. 
     /// Invokes the public encode to allow for customized overrides of the encode function,
     /// storing the result in the cmd buffer, and sets the return flags for future decode attempts
     ///
     /// - Parameters:
-    ///   - cmd: <#cmd description#>
-    ///   - value: <#value description#>
-    /// - Throws: <#throws value description#>
+    ///   - cmd: the lcb_CMDSTORE object, where the bytes and flags are set
+    ///   - value: user provided
+    /// - Throws: LCBSwiftError.transocdeAttemptFailed,Foundation JSON exceptions
     internal func encode(cmd:inout lcb_CMDSTORE, value:Any) throws {
         let (bytes, flags) = try self.encode(value:value)
         cmd.value.vtype = LCB_KV_COPY
@@ -29,7 +28,6 @@ public class Transcoder {
         cmd.flags = flags
 
     }
-    
     
     /// Receives a value when a storage operation is invoked that needs to be encoded for storage
     /// into couchbase.

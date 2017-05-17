@@ -34,7 +34,6 @@ func LCB_CMD_SET_KEY(_ cmd: inout lcb_CMDUNLOCK, _ key: String, _ len: Int) {
     cmd.key.contig.nbytes = len
 }
 
-
 /// Pulls the internal error string from a libcouchbase error code
 ///
 /// - Parameters:

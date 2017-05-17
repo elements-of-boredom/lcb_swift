@@ -256,6 +256,13 @@ extension Bucket {
         try transcoder.encode(cmd:&cmd, value: value)
         try self.invokeStore(cmd: &cmd, options:cmdOptions, callback:completion)
     }
+    
+    /// Returns an instance of a BucketManager used for performing management operations against this bucket.
+    ///
+    /// - Returns: BucketManager
+    public func manager() -> BucketManager {
+        return BucketManager()
+    }
 
     /// Prepend a string to an existing document.
     ///
@@ -404,19 +411,12 @@ extension Bucket {
 extension Bucket {
 
     public func lookupIn(key: String, specs: String) {
-
+        
     }
 
     public func mutateIn(key: String, specs: String) {
 
     }
-
-    // - MARK: MapReduce/Views
-
-    public func query(design: String, view: String, isDevelopment: Bool) {
-
-    }
-
 }
 
 // - MARK: Private helpers

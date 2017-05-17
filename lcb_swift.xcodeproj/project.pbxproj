@@ -28,6 +28,15 @@
 		37578C601EAE92F800E39B18 /* Bucket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0111EAA9415001C197F /* Bucket.swift */; };
 		37578C621EAE93C300E39B18 /* CouchbaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F01F1EAAA0B2001C197F /* CouchbaseError.swift */; };
 		37578C641EAE93C800E39B18 /* N1QLQueryResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F01B1EAA9EAD001C197F /* N1QLQueryResult.swift */; };
+		376D5F3D1ECCD74E00CBC63A /* BucketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376D5F3C1ECCD74E00CBC63A /* BucketManager.swift */; };
+		376D5F3E1ECCD74E00CBC63A /* BucketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376D5F3C1ECCD74E00CBC63A /* BucketManager.swift */; };
+		376D5F3F1ECCD74E00CBC63A /* BucketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376D5F3C1ECCD74E00CBC63A /* BucketManager.swift */; };
+		376D5F411ECCDA4F00CBC63A /* SpatialQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376D5F401ECCDA4F00CBC63A /* SpatialQuery.swift */; };
+		376D5F421ECCDA4F00CBC63A /* SpatialQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376D5F401ECCDA4F00CBC63A /* SpatialQuery.swift */; };
+		376D5F431ECCDA4F00CBC63A /* SpatialQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376D5F401ECCDA4F00CBC63A /* SpatialQuery.swift */; };
+		376D5F491ECCDE8E00CBC63A /* Bucket+SpatialQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376D5F481ECCDE8E00CBC63A /* Bucket+SpatialQuery.swift */; };
+		376D5F4A1ECCDE8E00CBC63A /* Bucket+SpatialQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376D5F481ECCDE8E00CBC63A /* Bucket+SpatialQuery.swift */; };
+		376D5F4B1ECCDE8E00CBC63A /* Bucket+SpatialQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376D5F481ECCDE8E00CBC63A /* Bucket+SpatialQuery.swift */; };
 		3780F0091EAA8618001C197F /* Cluster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0081EAA8618001C197F /* Cluster.swift */; };
 		3780F00B1EAA9238001C197F /* CreateOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F00A1EAA9238001C197F /* CreateOptions.swift */; };
 		3780F00C1EAA923C001C197F /* Cluster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3780F0081EAA8618001C197F /* Cluster.swift */; };
@@ -145,6 +154,9 @@
 		372D363B1EB3CD1200C51EB4 /* StorageType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StorageType.swift; sourceTree = "<group>"; };
 		3745C9191ECB58BA00B9899A /* ViewQueryMeta.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewQueryMeta.swift; sourceTree = "<group>"; };
 		3745C91D1ECB7D0300B9899A /* Transcoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Transcoder.swift; sourceTree = "<group>"; };
+		376D5F3C1ECCD74E00CBC63A /* BucketManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BucketManager.swift; sourceTree = "<group>"; };
+		376D5F401ECCDA4F00CBC63A /* SpatialQuery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpatialQuery.swift; sourceTree = "<group>"; };
+		376D5F481ECCDE8E00CBC63A /* Bucket+SpatialQuery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Bucket+SpatialQuery.swift"; sourceTree = "<group>"; };
 		3780F0081EAA8618001C197F /* Cluster.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Cluster.swift; sourceTree = "<group>"; };
 		3780F00A1EAA9238001C197F /* CreateOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CreateOptions.swift; sourceTree = "<group>"; };
 		3780F00E1EAA939C001C197F /* Authenticator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Authenticator.swift; sourceTree = "<group>"; };
@@ -215,6 +227,14 @@
 			path = lcb_command;
 			sourceTree = "<group>";
 		};
+		376D5F3B1ECCD73700CBC63A /* BucketManager */ = {
+			isa = PBXGroup;
+			children = (
+				376D5F3C1ECCD74E00CBC63A /* BucketManager.swift */,
+			);
+			name = BucketManager;
+			sourceTree = "<group>";
+		};
 		3780F01A1EAA9E8A001C197F /* Results */ = {
 			isa = PBXGroup;
 			children = (
@@ -244,6 +264,7 @@
 				379746611EC36CB300690622 /* BucketCallbacks.swift */,
 				379746651EC36E9200690622 /* Bucket+N1QL.swift */,
 				379746801EC39D5F00690622 /* Bucket+ViewQuery.swift */,
+				376D5F481ECCDE8E00CBC63A /* Bucket+SpatialQuery.swift */,
 			);
 			name = Bucket;
 			sourceTree = "<group>";
@@ -276,6 +297,7 @@
 				37BF00491EC6277900B618C2 /* ViewQueryCallbackDelegate.swift */,
 				3783931F1ECA0FBB00CE9209 /* ViewQueryRow.swift */,
 				3745C9191ECB58BA00B9899A /* ViewQueryMeta.swift */,
+				376D5F401ECCDA4F00CBC63A /* SpatialQuery.swift */,
 			);
 			name = View;
 			sourceTree = "<group>";
@@ -362,6 +384,7 @@
 		OBJ_7 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				376D5F3B1ECCD73700CBC63A /* BucketManager */,
 				379746881EC3C15200690622 /* Extensions */,
 				379746691EC3721500690622 /* QueryTypes */,
 				3797465C1EC360AB00690622 /* Bucket */,
@@ -519,6 +542,7 @@
 				3797467B1EC3740200690622 /* ViewSortOrder.swift in Sources */,
 				379746641EC36CB300690622 /* BucketCallbacks.swift in Sources */,
 				37578C5F1EAE92F600E39B18 /* Authenticator.swift in Sources */,
+				376D5F3F1ECCD74E00CBC63A /* BucketManager.swift in Sources */,
 				37C29E6F1EC2486A009A849B /* URL+queryItems.swift in Sources */,
 				37C29E671EC2130B009A849B /* N1QLScanConsistency.swift in Sources */,
 				379746601EC360CD00690622 /* Bucket+Configuration.swift in Sources */,
@@ -530,12 +554,14 @@
 				37C29E621EC0ED59009A849B /* String+utf8String.swift in Sources */,
 				37BF00501EC627DA00B618C2 /* ViewQueryResult.swift in Sources */,
 				37DB3C511EAFEDDD009996DA /* Options.swift in Sources */,
+				376D5F4B1ECCDE8E00CBC63A /* Bucket+SpatialQuery.swift in Sources */,
 				37C29E6B1EC2431F009A849B /* LCBSwiftError.swift in Sources */,
 				37578C5C1EAE92EF00E39B18 /* main.swift in Sources */,
 				378A60861EAFA25F00651D86 /* OperationResult.swift in Sources */,
 				3797466E1EC3723600690622 /* SearchQuery.swift in Sources */,
 				3745C9201ECB7D0300B9899A /* Transcoder.swift in Sources */,
 				378393221ECA0FBB00CE9209 /* ViewQueryRow.swift in Sources */,
+				376D5F431ECCDA4F00CBC63A /* SpatialQuery.swift in Sources */,
 				379746771EC373CB00690622 /* ViewErrorMode.swift in Sources */,
 				378A60821EAF942500651D86 /* Macros.swift in Sources */,
 				37578C601EAE92F800E39B18 /* Bucket.swift in Sources */,
@@ -561,6 +587,8 @@
 				379746791EC3740200690622 /* ViewSortOrder.swift in Sources */,
 				3745C91A1ECB58BA00B9899A /* ViewQueryMeta.swift in Sources */,
 				379746621EC36CB300690622 /* BucketCallbacks.swift in Sources */,
+				376D5F411ECCDA4F00CBC63A /* SpatialQuery.swift in Sources */,
+				376D5F491ECCDE8E00CBC63A /* Bucket+SpatialQuery.swift in Sources */,
 				37C29E6D1EC2486A009A849B /* URL+queryItems.swift in Sources */,
 				37C29E651EC2130B009A849B /* N1QLScanConsistency.swift in Sources */,
 				3797465E1EC360CD00690622 /* Bucket+Configuration.swift in Sources */,
@@ -572,6 +600,7 @@
 				3745C91E1ECB7D0300B9899A /* Transcoder.swift in Sources */,
 				37C29E601EC0ED59009A849B /* String+utf8String.swift in Sources */,
 				3780F01C1EAA9EAD001C197F /* N1QLQueryResult.swift in Sources */,
+				376D5F3D1ECCD74E00CBC63A /* BucketManager.swift in Sources */,
 				37DB3C4F1EAFEDDD009996DA /* Options.swift in Sources */,
 				3780F0201EAAA0B2001C197F /* CouchbaseError.swift in Sources */,
 				37C29E691EC2431F009A849B /* LCBSwiftError.swift in Sources */,
@@ -609,11 +638,14 @@
 				3797467E1EC374AA00690622 /* ViewIndexState.swift in Sources */,
 				3780F0101EAA939C001C197F /* Authenticator.swift in Sources */,
 				37DB3C5D1EB105DF009996DA /* MultiCallbackResult.swift in Sources */,
+				376D5F421ECCDA4F00CBC63A /* SpatialQuery.swift in Sources */,
+				376D5F4A1ECCDE8E00CBC63A /* Bucket+SpatialQuery.swift in Sources */,
 				3725780B1EC4ADD30072E4B1 /* BucketIntegrationTests.swift in Sources */,
 				37C29E611EC0ED59009A849B /* String+utf8String.swift in Sources */,
 				3780F01D1EAA9EAD001C197F /* N1QLQueryResult.swift in Sources */,
 				3745C91B1ECB58BA00B9899A /* ViewQueryMeta.swift in Sources */,
 				37DB3C501EAFEDDD009996DA /* Options.swift in Sources */,
+				376D5F3E1ECCD74E00CBC63A /* BucketManager.swift in Sources */,
 				3780F0211EAAA0B2001C197F /* CouchbaseError.swift in Sources */,
 				37BF004B1EC6277900B618C2 /* ViewQueryCallbackDelegate.swift in Sources */,
 				378393211ECA0FBB00CE9209 /* ViewQueryRow.swift in Sources */,

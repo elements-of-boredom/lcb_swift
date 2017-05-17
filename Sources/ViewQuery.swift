@@ -120,27 +120,27 @@ public class ViewQuery {
         return self
     }
 
-    /// Builds a url querystring from the options
-    ///
-    /// - Returns: url query string
-    internal func optionString() -> String {
-
-        var comp = URLComponents(string: "?")!
-        for (key, value) in options {
-            comp.queryItems?.append(URLQueryItem(name: key, value: String(describing:value)))
-        }
-
-        if let query = comp.query {
-            return query
-        }
-        return ""
-    }
-    
     internal func isIncludeDocs() -> Bool {
         if let include = options["include_docs"] as? Bool {
             return include
         }
         return false
+    }
+    
+    /// Builds a url querystring from the options
+    ///
+    /// - Returns: url query string
+    func optionString() -> String {
+        
+        var comp = URLComponents(string: "?")!
+        for (key, value) in options {
+            comp.queryItems?.append(URLQueryItem(name: key, value: String(describing:value)))
+        }
+        
+        if let query = comp.query {
+            return query
+        }
+        return ""
     }
 
     /// Mirrors JSON.stringify in javascript
@@ -149,7 +149,7 @@ public class ViewQuery {
     ///   - value: values to "stringify"
     ///   - prettyPrinted: return the string with "pretty" spacing
     /// - Returns: stringified object.
-    private func JSONStringify(value:Any, prettyPrinted: Bool = false) -> String {
+    func JSONStringify(value:Any, prettyPrinted: Bool = false) -> String {
         let options = prettyPrinted ? JSONSerialization.WritingOptions.prettyPrinted : []
         guard JSONSerialization.isValidJSONObject(value: value) else {
             return ""

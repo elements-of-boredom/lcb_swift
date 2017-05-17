@@ -125,6 +125,12 @@ class BucketTests: XCTestCase {
         XCTAssertNotEqual(original, bucket.viewTimeout)
         bucket.viewTimeout = original
     }
+    
+    func testAllThingsExist() {
+       _ = Bucket.clientVersion
+        //->manager()
+        
+    }
 
     static var allTests = [
         ("configThrottle", testConfigThrottleWorks),

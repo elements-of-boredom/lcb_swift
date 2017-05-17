@@ -77,6 +77,33 @@ class ViewQueryIntegrationTests: XCTestCase {
         }
         expect()
     }
+    
+    func testSpatialQueryWorks() {
+        let exp = expectation(description:"spatial")
+        guard let sBucket = try? cluster.openBucket(name: "travel-sample") else {
+            XCTFail("Missing travel-sample bucket")
+            return
+        }
+        
+        let query = SpatialQuery(designDocument: "spatial",viewName: "poi").range(start: [0,0,0,0], end: [90,180,10,7]).limit(10)
+        try? sBucket.query(query: query) { result in
+            switch result {
+            case let .error(msg):
+                XCTFail(msg)
+            case let .success(results,meta):
+                if let docid = results, let firstrow = docid.first {
+                    print(firstrow.key)
+                    XCTAssertNil(firstrow.doc)
+                    XCTAssertNil(firstrow.errors)
+                    XCTAssert(results?.count == 10)
+                    XCTAssertNotNil(meta)
+                }
+                exp.fulfill()
+            }
+            
+        }
+        expect()
+    }
 
     
     func expect() {
